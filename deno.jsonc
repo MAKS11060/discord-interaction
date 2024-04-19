@@ -1,0 +1,13 @@
+{
+  "lock": false,
+  "tasks": {
+    "dev": "deno run -A --unstable-hmr main.ts",
+    "devr": "deno run -Ar --unstable-hmr main.ts",
+    "test": "deno test -A"
+  },
+  "imports": {
+    "hono": "npm:hono",
+    "hono/logger": "npm:hono/logger",
+    "hono/factory": "npm:hono/factory",
+  }
+}
