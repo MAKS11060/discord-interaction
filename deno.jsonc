@@ -9,5 +9,8 @@
     "hono": "npm:hono",
     "hono/logger": "npm:hono/logger",
     "hono/factory": "npm:hono/factory",
-  }
+  },
+  "unstable": [
+    "kv"
+  ]
 }
