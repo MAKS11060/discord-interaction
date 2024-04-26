@@ -6,9 +6,13 @@
     "test": "deno test -A"
   },
   "imports": {
+    "@std/bytes": "jsr:@std/bytes@^0.224.0",
+    "@std/encoding": "jsr:@std/encoding@^0.224.0",
     "hono": "npm:hono",
-    "hono/logger": "npm:hono/logger",
     "hono/factory": "npm:hono/factory",
+    "hono/logger": "npm:hono/logger",
+    "discord-api-types": "npm:discord-api-types",
+    "zod": "npm:zod"
   },
   "unstable": [
     "kv"

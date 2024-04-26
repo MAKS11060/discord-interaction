@@ -1,6 +1,6 @@
+import {concat} from '@std/bytes'
+import {decodeHex, encodeHex} from '@std/encoding/hex'
 import {createMiddleware} from 'hono/factory'
-import {concat} from 'https://deno.land/std/bytes/concat.ts'
-import {decodeHex, encodeHex} from 'https://deno.land/std/encoding/hex.ts'
 const encoder = new TextEncoder()
 
 export const importRawKey = (publicKey: string): Promise<CryptoKey> => {

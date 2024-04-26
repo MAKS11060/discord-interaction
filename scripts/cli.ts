@@ -18,7 +18,7 @@ import {
 const kv = await Deno.openKv()
 
 const authorize = async () => {
-  if (!(await kv.get(['token', clientId]))) {
+  if (!(await kv.get(['token', clientId])).versionstamp) {
     const token = await getToken() // authorize
     console.log('authorize', clientId)
     await kv.set(['token', clientId], token, {

@@ -1,8 +1,23 @@
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
-} from 'npm:discord-api-types/v10'
+  MessageFlags,
+} from 'discord-api-types/v10'
 import {defineCommand} from './builder.ts'
+
+const help = defineCommand(
+  {
+    name: 'help',
+    description: 'Show help',
+  },
+  () => {
+    return {
+      command(c) {
+        return c.reply({content: 'ok', flags: MessageFlags.Ephemeral})
+      },
+    }
+  }
+)
 
 const test = defineCommand(
   {
@@ -16,9 +31,9 @@ const test = defineCommand(
         description: 'str',
       },
       {
-        type: ApplicationCommandOptionType.Number,
-        name: 'num',
-        description: 'num',
+        type: ApplicationCommandOptionType.Integer,
+        name: 'int',
+        description: 'int',
       },
       {
         type: ApplicationCommandOptionType.Boolean,
@@ -30,17 +45,110 @@ const test = defineCommand(
         name: 'user',
         description: 'sel user',
       },
+      {
+        type: ApplicationCommandOptionType.Channel,
+        name: 'channel',
+        description: 'Channel',
+      },
+      {
+        type: ApplicationCommandOptionType.Role,
+        name: 'role',
+        description: 'Role',
+      },
+      {
+        type: ApplicationCommandOptionType.Mentionable,
+        name: 'mentionable',
+        description: 'Mentionable',
+      },
+      {
+        type: ApplicationCommandOptionType.Number,
+        name: 'num',
+        description: 'num',
+      },
+      {
+        type: ApplicationCommandOptionType.Attachment,
+        name: 'attachment',
+        description: 'Attachment',
+      },
     ],
   },
-  (c) => {
-    c.name === 'test'
-
+  () => {
     return {
-      command(ctx) {
-        return ctx.reply({content: 'test ok'})
+      command(c) {
+        return c.reply({
+          content: `\`\`\`json\n${JSON.stringify(
+            c.interaction.data,
+            null,
+            2
+          )}\n\`\`\``,
+        })
       },
     }
   }
 )
 
-export const commands = [test]
+const sub = defineCommand(
+  {
+    type: ApplicationCommandType.ChatInput,
+    name: 'permissions',
+    description: 'Get or edit permissions for a user or a role',
+    options: [
+      {
+        type: ApplicationCommandOptionType.SubcommandGroup,
+        name: 'user',
+        description: 'Get or edit permissions for a user',
+        options: [
+          {
+            type: ApplicationCommandOptionType.Subcommand,
+            name: 'get',
+            description: 'Get permissions for a user',
+            options: [
+              {
+                name: 'user',
+                description: 'The user to get',
+                type: ApplicationCommandOptionType.User,
+                required: true,
+              },
+              {
+                name: 'channel',
+                description:
+                  'The channel permissions to get. If omitted, the guild permissions will be returned',
+                type: ApplicationCommandOptionType.Channel,
+                required: false,
+              },
+            ],
+          },
+          {
+            name: 'edit',
+            description: 'Edit permissions for a user',
+            type: ApplicationCommandOptionType.Subcommand,
+            options: [
+              {
+                name: 'user',
+                description: 'The user to edit',
+                type: ApplicationCommandOptionType.User,
+                required: true,
+              },
+              {
+                name: 'channel',
+                description:
+                  'The channel permissions to edit. If omitted, the guild permissions will be edited',
+                type: ApplicationCommandOptionType.Channel,
+                required: false,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  () => {
+    return {
+      command(c) {
+        return c.reply({content: 'ok'})
+      },
+    }
+  }
+)
+
+export const commands = [help, test, sub]

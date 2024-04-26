@@ -36,7 +36,7 @@ export const loggerBody = <T>(options: {
       console.log(
         `--> ${c.req.method.padStart(pad, padFill)} %c${c.res.status} %c${
           c.req.url
-        } %c${(performance.now() - start).toFixed(3)}`,
+        } %c${(performance.now() - start).toFixed(3)} ms`,
         `color: ${statusColor(c.res.status)}`,
         'color: green',
         'color: blue'
