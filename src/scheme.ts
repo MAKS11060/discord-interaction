@@ -28,7 +28,7 @@ export const commandOptionsScheme = z
       description_localizations: z
         .record(z.nativeEnum(Locale), descriptionScheme)
         .optional(),
-    })
+    }).passthrough()
   )
   .max(25)
 
