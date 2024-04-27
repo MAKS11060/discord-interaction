@@ -3,7 +3,7 @@ import {
   APIInteractionResponse,
   InteractionResponseType,
   InteractionType,
-  MessageFlags,
+  MessageFlags
 } from 'discord-api-types/v10'
 import {createFactory, createMiddleware} from 'hono/factory'
 import {DefineCommand, InteractionContext} from './builder.ts'
@@ -42,17 +42,7 @@ const errorCommand = (text: string) => {
   return Response.json(r)
 }
 
-export const discordInteraction = <T extends DefineCommand[]>(
-  key: CryptoKey,
-  commands: T
-) => {
-  // commands.map((c) => {})
-  // const nameMap = new Map<string, T[number]>()
-  // for (const command of commands) {
-  //   nameMap.set(command.name, command)
-  // }
-  // console.log(nameMap)
-
+export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, commands: T) => {
   // prepare
   const list = commands.map(({executor, ...command}) => {
     return {
@@ -72,10 +62,9 @@ export const discordInteraction = <T extends DefineCommand[]>(
 
     if (interaction.type === InteractionType.ApplicationCommand) {
       for (const {command, handlers} of list) {
-        if (!handlers.command)
-          return errorCommand('command handler is undefined')
-
         if (interaction.data.name === command.name) {
+          if (!handlers.command) return errorCommand('command handler is undefined')
+
           const ctx = new InteractionContext(interaction)
           return c.json(await handlers.command(ctx))
         }
@@ -83,15 +72,31 @@ export const discordInteraction = <T extends DefineCommand[]>(
     }
 
     if (interaction.type === InteractionType.MessageComponent) {
-      return unknownCommand()
+      for (const {command, handlers} of list) {
+        if (interaction.message.interaction) {
+          if (interaction.message.interaction.name === command.name) {
+            if (!handlers.messageComponent) return errorCommand('messageComponent handler is undefined')
+
+            const ctx = new InteractionContext(interaction)
+            return c.json(await handlers.messageComponent(ctx))
+          }
+        }
+      }
     }
 
     if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-      return unknownCommand()
+      for (const {command, handlers} of list) {
+        if (interaction.data.name === command.name) {
+          if (!handlers.commandAutocomplete) return errorCommand('commandAutocomplete handler is undefined')
+
+          const ctx = new InteractionContext(interaction)
+          return c.json(await handlers.commandAutocomplete(ctx))
+        }
+      }
     }
 
     if (interaction.type === InteractionType.ModalSubmit) {
-      return unknownCommand()
+      return errorCommand('no implemented ModalSubmit')
     }
 
     return unknownCommand()
@@ -100,70 +105,12 @@ export const discordInteraction = <T extends DefineCommand[]>(
   return createFactory().createHandlers(
     verifyRequestSignature(key),
     loggerBody<APIInteraction>({
-      logFn: ({type, data, member, ...int}) => {
-        console.log(InteractionType[type], data)
+      logFn: ({type, data, member, channel, ...int}) => {
+        console.log('channel', channel?.id, channel?.name, '| member', member?.user.id, member?.user.global_name)
         console.log(int)
+        console.log(InteractionType[type], data)
       },
     }),
     interactionHandler
   )
 }
-
-// {
-//   type Command<T extends RESTPostAPIApplicationCommandsJSONBody> = T
-//   // type Config = Command<{
-//   //   type: ApplicationCommandType.ChatInput
-//   //   name: 'test'
-//   //   description: 'test'
-//   // }>
-
-//   // const makeOptions = <T extends APIApplicationCommandOption[]>(options: T) =>
-//   //   options
-//   // const options = makeOptions([
-//   //   {
-//   //     type: ApplicationCommandOptionType.Boolean,
-//   //     name: 'bool',
-//   //     description: 'bool',
-//   //   },
-//   // ])
-
-//   type ParseOptions<T extends APIApplicationCommandOption[]> =
-//     T extends APIApplicationCommandOption[] ? T[number] : never
-
-//   type T = ParseOptions<
-//     [
-//       {
-//         type: ApplicationCommandOptionType.Boolean
-//         name: 'bool'
-//         description: 'bool'
-//       },
-//       {
-//         type: ApplicationCommandOptionType.Boolean
-//         name: 'bool 2'
-//         description: 'bool 2',
-//       }
-//     ]
-//   >
-
-//   type Config<T extends Record<string, unknown>> = {
-//     [K in keyof T]: {
-//       command: Omit<RESTPostAPIChatInputApplicationCommandsJSONBody, 'name'> & {
-//         name: K
-//       }
-//       // handler: (command: T[K]) => void
-//     }
-//   }
-
-//   const defineCommand = <T extends Record<string, unknown>>(config: Config<T>) =>
-//     config
-
-//   defineCommand({
-//     help: {
-//       command: {
-//         name: 'help',
-//         description: '',
-//         // type: ApplicationCommandType.ChatInput,
-//       },
-//     },
-//   })
-// }
