@@ -16,5 +16,9 @@
   },
   "unstable": [
     "kv"
-  ]
+  ],
+  "exports": {
+    ".": "./mod.ts",
+    "./hono": "./src/adapter/hono.ts"
+  }
 }

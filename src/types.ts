@@ -23,3 +23,11 @@ export enum InteractionInstallContextTypes {
    */
   USER_INSTALL = 1,
 }
+
+export type Pretty<T extends object | Record<string, unknown>> = {
+  [K in keyof T]: T[K] extends Record<string, unknown>
+    ? Pretty<T[K]>
+    : T[K] extends object
+      ? Pretty<T[K]>
+      : T[K]
+}

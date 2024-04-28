@@ -3,47 +3,32 @@ import {
   APIInteractionResponse,
   InteractionResponseType,
   InteractionType,
-  MessageFlags
+  MessageFlags,
 } from 'discord-api-types/v10'
-import {createFactory, createMiddleware} from 'hono/factory'
 import {DefineCommand, InteractionContext} from './builder.ts'
 import {verifyRequestSignature} from './lib/ed25519.ts'
-import {loggerBody} from './lib/helper.ts'
 
-/*
-[discord] --> [Server]
-            verify request
-          handle interaction
-
-const c = defineCommand()
-const handler = c.execute() // init command
-handler(interaction)
- */
-
-const unknownCommand = () => {
-  const r: APIInteractionResponse = {
+const unknownCommand = (): APIInteractionResponse => {
+  return {
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
       content: 'Unknown command',
       flags: MessageFlags.Ephemeral,
     },
   }
-  return Response.json(r)
 }
 
-const errorCommand = (text: string) => {
-  const r: APIInteractionResponse = {
+const errorCommand = (text: string): APIInteractionResponse => {
+  return {
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
       content: text,
       flags: MessageFlags.Ephemeral,
     },
   }
-  return Response.json(r)
 }
 
-export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, commands: T) => {
-  // prepare
+export const createHandler = <T extends DefineCommand[]>(commands: T) => {
   const list = commands.map(({executor, ...command}) => {
     return {
       command,
@@ -51,13 +36,9 @@ export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, co
     }
   })
 
-  const interactionHandler = createMiddleware(async (c) => {
-    const interaction = await c.req.json<APIInteraction>()
-
+  return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
     if (interaction.type === InteractionType.Ping) {
-      return Response.json({
-        type: InteractionResponseType.Pong,
-      } as APIInteractionResponse)
+      return {type: InteractionResponseType.Pong}
     }
 
     if (interaction.type === InteractionType.ApplicationCommand) {
@@ -66,7 +47,7 @@ export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, co
           if (!handlers.command) return errorCommand('command handler is undefined')
 
           const ctx = new InteractionContext(interaction)
-          return c.json(await handlers.command(ctx))
+          return await handlers.command(ctx)
         }
       }
     }
@@ -78,7 +59,7 @@ export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, co
             if (!handlers.messageComponent) return errorCommand('messageComponent handler is undefined')
 
             const ctx = new InteractionContext(interaction)
-            return c.json(await handlers.messageComponent(ctx))
+            return await handlers.messageComponent(ctx)
           }
         }
       }
@@ -90,7 +71,7 @@ export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, co
           if (!handlers.commandAutocomplete) return errorCommand('commandAutocomplete handler is undefined')
 
           const ctx = new InteractionContext(interaction)
-          return c.json(await handlers.commandAutocomplete(ctx))
+          return await handlers.commandAutocomplete(ctx)
         }
       }
     }
@@ -100,17 +81,16 @@ export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, co
     }
 
     return unknownCommand()
-  })
+  }
+}
 
-  return createFactory().createHandlers(
-    verifyRequestSignature(key),
-    loggerBody<APIInteraction>({
-      logFn: ({type, data, member, channel, ...int}) => {
-        console.log('channel', channel?.id, channel?.name, '| member', member?.user.id, member?.user.global_name)
-        console.log(int)
-        console.log(InteractionType[type], data)
-      },
-    }),
-    interactionHandler
-  )
+export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, commands: T) => {
+  const handler = createHandler(commands)
+
+  return async (req: Request): Promise<Response> => {
+    const invalid = await verifyRequestSignature(req, key)
+    if (invalid) return invalid
+
+    return Response.json(await handler(await req.json()))
+  }
 }

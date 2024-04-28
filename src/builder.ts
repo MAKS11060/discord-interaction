@@ -11,36 +11,53 @@ import {
   APIInteractionResponseUpdateMessage,
   APIMessageComponentInteraction,
   APIModalSubmitInteraction,
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
   InteractionResponseType,
+  RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from 'discord-api-types/v10'
 import {commandScheme} from './scheme.ts'
-
-type Pretty<T extends object> = {
-  [K in keyof T]: T[K] extends object ? Pretty<T[K]> : T[K]
-}
+import {Pretty} from './types.ts'
 
 // =================================================== Parse command
-type OptionsContext<T extends APIApplicationCommandOption> = {
-  get(name: T['name']): void
-}
+// type OptionsContext<T extends APIApplicationCommandOption> = {
+//   get(name: T['name']): void
+// }
 
-type ParseOption<T extends APIApplicationCommandOption> = OptionsContext<T>
+// type ParseOption<T extends APIApplicationCommandOption> = OptionsContext<T>
 // type ParseOption<T extends APIApplicationCommandOption> = T
 
-type ParseInteraction<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['options'] extends Array<infer O>
+// type ParseInteraction<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['options'] extends Array<infer O>
+//   ? O extends APIApplicationCommandOption
+//     ? ParseOption<O>
+//     : never
+//   : never
+
+type ExtractOptions<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['options'] extends Array<infer O>
   ? O extends APIApplicationCommandOption
-    ? ParseOption<O>
+    ? O
     : never
   : never
+
+type ParseSchema<T extends RESTPostAPIApplicationCommandsJSONBody> =
+  T extends RESTPostAPIChatInputApplicationCommandsJSONBody ? T : never
 
 export class InteractionContext<
   I extends APIInteraction,
   Scheme extends RESTPostAPIChatInputApplicationCommandsJSONBody
 > {
   constructor(
-    readonly interaction: I // readonly ctx: ParseInteraction<Scheme>
+    readonly interaction: I
+    // readonly ctx: ParseInteraction<Scheme>
   ) {}
+
+  get<T extends ExtractOptions<ParseSchema<Scheme>>['name']>(name: T) {
+    if (this.interaction.type === ApplicationCommandType.ChatInput) {
+      this.interaction
+    }
+    return
+  }
 
   // getOption(name: (typeof this.ctx)['name']) {
   //   return this.ctx[name]
@@ -69,6 +86,21 @@ export class InteractionContext<
   }
 }
 
+interface CommandHandler<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> {
+  /**
+   * @example
+   * ```ts
+   * command(c) {
+   *   return c.reply({content: 'Hi'}) // reply command name
+   * }
+   * ```
+   */
+  command?(c: InteractionContext<APIApplicationCommandInteraction, T>): APIInteractionResponse
+  messageComponent?(c: InteractionContext<APIMessageComponentInteraction, T>): APIInteractionResponse
+  commandAutocomplete?(c: InteractionContext<APIApplicationCommandAutocompleteInteraction, T>): APIInteractionResponse
+  modalSubmit?(c: InteractionContext<APIModalSubmitInteraction, T>): APIInteractionResponse
+}
+
 /**
  * @example
  * ```ts
@@ -86,25 +118,64 @@ export class InteractionContext<
  */
 export const defineCommand = <T extends RESTPostAPIChatInputApplicationCommandsJSONBody>(
   init: Pretty<T>,
-  executor: (command: Readonly<T>) => {
-    /**
-     * @example
-     * ```ts
-     * command(c) {
-     *   return c.reply({content: c.name}) // reply command name
-     * }
-     * ```
-     */
-    command?(ctx: InteractionContext<APIApplicationCommandInteraction, T>): APIInteractionResponse
-    messageComponent?(ctx: InteractionContext<APIMessageComponentInteraction, T>): APIInteractionResponse
-    commandAutocomplete?(
-      ctx: InteractionContext<APIApplicationCommandAutocompleteInteraction, T>
-    ): APIInteractionResponse
-    modalSubmit?(ctx: InteractionContext<APIModalSubmitInteraction, T>): APIInteractionResponse
-  }
+  executor: (command: T) => CommandHandler<T>
 ) => {
   const command = commandScheme.passthrough().parse(init) as T
   return {...command, executor}
 }
 
 export type DefineCommand = ReturnType<typeof defineCommand>
+
+// =================================================== //
+
+/* defineCommand(
+  {
+    name: 't',
+    description: 't',
+    options: [
+      {
+        type: ApplicationCommandOptionType.String,
+        name: 'autocomplete',
+        description: 'autocomplete',
+        autocomplete: true,
+      },
+    ],
+  },
+  () => {
+    return {
+      command(c) {
+        return c.reply({content: ''})
+      },
+    }
+  }
+)
+
+const defCommand = <T extends RESTPostAPIChatInputApplicationCommandsJSONBody>(init: Pretty<T>) => {
+  return commandScheme.passthrough().parse(init) as T
+}
+const createHandler = <T extends RESTPostAPIChatInputApplicationCommandsJSONBody>(
+  command: T,
+  handler: (init: Readonly<T>) => CommandHandler<T>
+) => {}
+
+const command = defCommand({
+  name: 'test',
+  description: 'd',
+  options: [
+    {
+      type: ApplicationCommandOptionType.String,
+      name: 'autocomplete',
+      description: 'autocomplete',
+      autocomplete: true,
+    },
+  ],
+})
+
+createHandler(command, () => {
+  return {
+    command(c) {
+      return c.reply({content: ''})
+    },
+  }
+})
+ */

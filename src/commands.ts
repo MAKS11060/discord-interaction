@@ -83,6 +83,8 @@ const test = defineCommand(
   () => {
     return {
       command(c) {
+        c.get('str')
+
         return c.reply({
           content: `\`\`\`json\n${JSON.stringify(c.interaction.data, null, 2)}\n\`\`\``,
           components: [

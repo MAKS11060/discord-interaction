@@ -5,7 +5,7 @@ import {
   Select,
   prompt,
 } from 'https://deno.land/x/cliffy/prompt/mod.ts'
-import {RESTOAuth2ImplicitAuthorizationURLFragmentResult} from 'npm:discord-api-types/v10'
+import {RESTOAuth2ImplicitAuthorizationURLFragmentResult} from 'discord-api-types/v10'
 import {commands} from '../src/commands.ts'
 import {
   clientId,

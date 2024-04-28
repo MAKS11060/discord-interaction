@@ -1,16 +1,12 @@
-import {Hono} from 'hono'
-import {assertEquals} from 'https://deno.land/std/assert/mod.ts'
-import {decodeKeyHex} from 'https://raw.githubusercontent.com/MAKS11060/deno-libs/main/crypto/jwk.ts'
+import { Hono } from 'hono'
+import { assertEquals } from 'https://deno.land/std/assert/mod.ts'
+import { decodeKeyHex } from 'https://raw.githubusercontent.com/MAKS11060/deno-libs/main/crypto/jwk.ts'
 import {
-  APIApplicationCommandInteraction,
-  APIInteraction,
-  ApplicationCommandType,
-  ChannelType,
-  InteractionType,
-  Locale,
+    APIInteraction,
+    InteractionType
 } from 'npm:discord-api-types/v10'
-import {discordInteraction} from './src/interaction.ts'
-import {importRawKey, signRequest} from './src/lib/ed25519.ts'
+import { discordInteraction } from './src/interaction.ts'
+import { importKeyRaw, signRequest } from './src/lib/ed25519.ts'
 
 Deno.env.set(
   'CLIENT_PUBLIC_KEY',
@@ -22,7 +18,7 @@ Deno.env.set(
 )
 
 const app = new Hono()
-const key = await importRawKey(Deno.env.get('CLIENT_PUBLIC_KEY')!)
+const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
 const pKey = await decodeKeyHex({
   alg: 'Ed25519',
   public: Deno.env.get('CLIENT_PUBLIC_KEY')!,
