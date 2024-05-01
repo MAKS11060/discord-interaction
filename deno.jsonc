@@ -7,11 +7,12 @@
   },
   "imports": {
     "@std/bytes": "jsr:@std/bytes@^0.224.0",
+    "@std/collections": "jsr:@std/collections@^0.224.0",
     "@std/encoding": "jsr:@std/encoding@^0.224.0",
+    "discord-api-types": "npm:discord-api-types",
     "hono": "npm:hono",
     "hono/factory": "npm:hono/factory",
     "hono/logger": "npm:hono/logger",
-    "discord-api-types": "npm:discord-api-types",
     "zod": "npm:zod"
   },
   "unstable": [

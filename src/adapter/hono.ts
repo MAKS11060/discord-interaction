@@ -1,11 +1,11 @@
 /**
- * Adapter for  {@link https://hono.dev Hono} framework
+ * Adapter for {@link https://hono.dev Hono} framework
  * @module
  */
 
 import {APIInteraction} from 'discord-api-types/v10'
 import {createFactory, createMiddleware} from 'hono/factory'
-import {DefineCommand} from '../builder.ts'
+import {Handler} from '../builder.ts'
 import {createHandler} from '../interaction.ts'
 import {verifyRequestSignature as verifyRequest} from '../lib/ed25519.ts'
 
@@ -37,8 +37,9 @@ export const verifyRequestSignature = (key: CryptoKey) => {
  * app.post('/interaction', ...discordInteraction(key, commands))
  * ```
  */
-export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, commands: T) => {
+export const discordInteraction = (key: CryptoKey, commands: Handler<any>[]) => {
   const handler = createHandler(commands)
+
   const interactionHandler = createMiddleware(async (c) => {
     const interaction = await c.req.json<APIInteraction>()
     return c.json(await handler(interaction))

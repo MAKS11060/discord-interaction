@@ -5,7 +5,7 @@ import {
   InteractionType,
   MessageFlags,
 } from 'discord-api-types/v10'
-import {DefineCommand, InteractionContext} from './builder.ts'
+import {Handler, InteractionContext} from './builder.ts'
 import {verifyRequestSignature} from './lib/ed25519.ts'
 
 const unknownCommand = (): APIInteractionResponse => {
@@ -28,12 +28,9 @@ const errorCommand = (text: string): APIInteractionResponse => {
   }
 }
 
-export const createHandler = <T extends DefineCommand[]>(commands: T) => {
-  const list = commands.map(({executor, ...command}) => {
-    return {
-      command,
-      handlers: executor(command),
-    }
+export const createHandler = (commands: Handler[]) => {
+  const list = commands.map(({command, executor}) => {
+    return {command, handler: executor(command)}
   })
 
   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
@@ -42,36 +39,36 @@ export const createHandler = <T extends DefineCommand[]>(commands: T) => {
     }
 
     if (interaction.type === InteractionType.ApplicationCommand) {
-      for (const {command, handlers} of list) {
+      for (const {command, handler} of list) {
         if (interaction.data.name === command.name) {
-          if (!handlers.command) return errorCommand('command handler is undefined')
+          if (!handler.command) return errorCommand('command handler is undefined')
 
-          const ctx = new InteractionContext(interaction)
-          return await handlers.command(ctx)
+          const ctx = new InteractionContext(interaction, command)
+          return await handler.command(ctx)
         }
       }
     }
 
     if (interaction.type === InteractionType.MessageComponent) {
-      for (const {command, handlers} of list) {
+      for (const {command, handler} of list) {
         if (interaction.message.interaction) {
           if (interaction.message.interaction.name === command.name) {
-            if (!handlers.messageComponent) return errorCommand('messageComponent handler is undefined')
+            if (!handler.messageComponent) return errorCommand('messageComponent handler is undefined')
 
-            const ctx = new InteractionContext(interaction)
-            return await handlers.messageComponent(ctx)
+            const ctx = new InteractionContext(interaction, command)
+            return await handler.messageComponent(ctx)
           }
         }
       }
     }
 
     if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-      for (const {command, handlers} of list) {
+      for (const {command, handler} of list) {
         if (interaction.data.name === command.name) {
-          if (!handlers.commandAutocomplete) return errorCommand('commandAutocomplete handler is undefined')
+          if (!handler.commandAutocomplete) return errorCommand('commandAutocomplete handler is undefined')
 
-          const ctx = new InteractionContext(interaction)
-          return await handlers.commandAutocomplete(ctx)
+          const ctx = new InteractionContext(interaction, command)
+          return await handler.commandAutocomplete(ctx)
         }
       }
     }
@@ -84,7 +81,7 @@ export const createHandler = <T extends DefineCommand[]>(commands: T) => {
   }
 }
 
-export const discordInteraction = <T extends DefineCommand[]>(key: CryptoKey, commands: T) => {
+export const discordInteraction = (key: CryptoKey, commands: Handler[]) => {
   const handler = createHandler(commands)
 
   return async (req: Request): Promise<Response> => {

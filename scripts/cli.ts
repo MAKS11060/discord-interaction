@@ -1,11 +1,7 @@
-#!/usr/bin/env -S deno run -A
+#!/usr/bin/env -S deno run -A --watch
 
-import {
-  Checkbox,
-  Select,
-  prompt,
-} from 'https://deno.land/x/cliffy/prompt/mod.ts'
 import {RESTOAuth2ImplicitAuthorizationURLFragmentResult} from 'discord-api-types/v10'
+import {Checkbox, Select, prompt} from 'https://deno.land/x/cliffy/prompt/mod.ts'
 import {commands} from '../src/commands.ts'
 import {
   clientId,
@@ -27,10 +23,7 @@ const authorize = async () => {
     return token
   }
 
-  const res = await kv.get<RESTOAuth2ImplicitAuthorizationURLFragmentResult>([
-    'token',
-    clientId,
-  ])
+  const res = await kv.get<RESTOAuth2ImplicitAuthorizationURLFragmentResult>(['token', clientId])
 
   return res.value
 }
@@ -79,14 +72,14 @@ while (true) {
         type: Checkbox,
         message: 'Select to deploy',
         name: 'deploy',
-        options: commands.map((it) => ({value: it, name: it.name})),
+        options: commands.map(({command}) => ({value: command, name: command.name})),
       },
     ])
 
     for (const item of (deploy as any[]) || []) {
       const {errors, ...deploy} = await postApplicationsCommands(token, item)
-      console.log(`Deploy: ${item.name}`, deploy)
-      console.error(`Deploy: ${item.name}`, JSON.stringify(errors, null, 2))
+      if (!errors) console.log(`Deploy: %c${deploy.id} ${item.name}`, 'color: green;')
+      else console.error(`Deploy: ${item.name}`, JSON.stringify(errors, null, 2))
     }
   }
 
@@ -102,10 +95,7 @@ while (true) {
     ])
 
     for (const item of select?.name || []) {
-      console.log(
-        `Delete: ${item}`,
-        await deleteApplicationsCommands(token, item)
-      )
+      console.log(`Delete: ${item}`, await deleteApplicationsCommands(token, item))
     }
   }
 }
