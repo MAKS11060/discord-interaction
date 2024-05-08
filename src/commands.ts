@@ -1,4 +1,7 @@
 import {
+APIActionRowComponent,
+  APIEmbed,
+  APIMessageActionRowComponent,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   ButtonStyle,
@@ -6,7 +9,7 @@ import {
   MessageFlags,
 } from 'discord-api-types/v10'
 import {defineCommand} from './builder.ts'
-import { Scheme } from "./types.ts";
+import {Danbooru, Post} from './ext/danbooru.ts'
 
 const help = defineCommand({
   name: 'help',
@@ -188,8 +191,6 @@ const sub = defineCommand({
 }).createHandler(() => {
   return {
     command(c) {
-      // c.get('user')
-
       return c.reply({content: 'ok'})
     },
   }
@@ -252,34 +253,134 @@ const sub2 = defineCommand({
   }
 })
 
-const test3 = defineCommand({
+const animeArt = defineCommand({
   type: ApplicationCommandType.ChatInput,
-  name: 'test',
-  description: '',
+  name: 'art',
+  description: 'Get anime art',
   options: [
+    // {
+    //   type: ApplicationCommandOptionType.Subcommand,
+    //   name: 'random',
+    //   description: 'Get random art',
+    // },
+    // {
+    //   type: ApplicationCommandOptionType.Subcommand,
+    //   name: 'fav',
+    //   description: 'User random favorites',
+    //   options: [
+    //     {
+    //       type: ApplicationCommandOptionType.String,
+    //       name: 'user',
+    //       description: 'username',
+    //       required: true,
+    //       max_length: 80,
+    //       // autocomplete: true,
+    //     },
+    //   ],
+    // },
     {
-      type: ApplicationCommandOptionType.String,
-      name: 'str2',
-      description: 'str2',
-      required: true,
-    },
-    {
-      type: ApplicationCommandOptionType.String,
-      name: 'str',
-      description: 'str',
-      required: true,
+      type: ApplicationCommandOptionType.Subcommand,
+      name: 'post',
+      description: 'Post by id',
+      options: [
+        {
+          type: ApplicationCommandOptionType.Number,
+          name: 'id',
+          description: 'Post id',
+          required: true,
+        },
+      ],
     },
   ],
-}).createHandler(() => {
-  return {
-    command(c) {
-      c.get('str')
+}).createHandler((c) => {
+  const danbooru = new Danbooru({
+    login: Deno.env.get('DANBOOURU_LOGIN')!,
+    apikey: Deno.env.get('DANBOOURU_APIKEY')!,
+  })
 
-      return c.reply({content: 'tr'})
+  const ArtButtonIds = {
+    rand: 'rand',
+    next: 'next',
+    save: 'save',
+  } as const
+
+  const getEmbeds = (img: Post | null) => {
+    // const img = await danbooru.saveSearchPosts()
+    // const img = await danbooru.userFavorites('maks11060')
+    const url = new URL(`/posts`, danbooru.origin.origin)
+    url.searchParams.set('tags', `${img?.tag_string_artist}`)
+
+    return [
+      {
+        image: {url: img?.file_url!},
+        url: new URL(`/posts/${img?.id}`, danbooru.origin.origin).toString(),
+        author: {
+          name: `${img?.tag_string_artist}`,
+          url: url.toString(),
+        },
+        title: `${img?.tag_string_character?.replaceAll('_', ' ') || `posts/${img?.id}`}`,
+        color: 7763574,
+      },
+    ] as APIEmbed[]
+  }
+
+  /** [Save Next Random] */
+  const getComponents = () =>
+    [
+      {
+        type: ComponentType.ActionRow,
+        components: [
+          {
+            label: 'Save',
+            custom_id: ArtButtonIds.save,
+            style: ButtonStyle.Success,
+            type: ComponentType.Button,
+          },
+          {
+            label: 'Next',
+            custom_id: ArtButtonIds.next,
+            style: ButtonStyle.Primary,
+            type: ComponentType.Button,
+          },
+          {
+            label: 'Random',
+            custom_id: ArtButtonIds.rand,
+            style: ButtonStyle.Secondary,
+            type: ComponentType.Button,
+          },
+        ],
+      },
+    ] as APIActionRowComponent<APIMessageActionRowComponent>[]
+
+  const setCustomId = (id: typeof ArtButtonIds, val?: string) => JSON.stringify({id, val})
+  const getCustomId = (raw: string) => {
+    try {
+      return JSON.parse(raw) as {
+        id: string
+        val?: string
+      }
+    } catch (e) {
+      return {
+        id: raw,
+      }
+    }
+  }
+
+  return {
+    async command(c) {
+      c.get('post')
+
+      return c.reply({
+        embeds: getEmbeds(await danbooru.saveSearchPosts()),
+        components: getComponents(),
+      })
     },
+    // messageComponent(c) {
+    //   return c.replyUpdate({
+    //     components: getComponents(),
+    //   })
+    // },
   }
 })
 
-// type A = Scheme<typeof test3>
-
-export const commands = [help, test, sub, sub2]
+export const commands = [help, test, sub, sub2, animeArt]

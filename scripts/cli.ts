@@ -1,8 +1,10 @@
-#!/usr/bin/env -S deno run -A --watch
+#!/usr/bin/env -S deno run -A
 
+import {parseArgs} from '@std/cli'
+import {resolve, toFileUrl} from '@std/path'
 import {RESTOAuth2ImplicitAuthorizationURLFragmentResult} from 'discord-api-types/v10'
 import {Checkbox, Select, prompt} from 'https://deno.land/x/cliffy/prompt/mod.ts'
-import {commands} from '../src/commands.ts'
+// import {commands} from '../src/commands.ts'
 import {
   clientId,
   deleteApplicationsCommands,
@@ -10,6 +12,25 @@ import {
   getToken,
   postApplicationsCommands,
 } from './_utils.ts'
+
+const args = parseArgs(Deno.args, {
+  string: ['c', 'commands'],
+  alias: {
+    commands: 'c',
+  },
+  default: {
+    commands: './src/commands.ts',
+  },
+})
+
+console.log(`load: ${resolve(Deno.cwd(), args.commands).toString()}`)
+
+const commands = await import(toFileUrl(resolve(Deno.cwd(), args.commands)).toString()).then(r => {
+  return r.commands
+}).catch((e) => {
+  console.error('invalid commands file')
+  Deno.exit(1)
+})
 
 const kv = await Deno.openKv()
 
@@ -34,7 +55,7 @@ if (!token) {
   throw new Error('not authorized. restart cli')
 }
 
-while (true) {
+while (import.meta.main) {
   const select = await prompt([
     {
       type: Select,
@@ -54,6 +75,7 @@ while (true) {
 
   if (select.action === 'get') {
     const commands = await getApplicationsCommands(token)
+    console.log(`commands ${commands.length}/100`)
     for (const command of commands) {
       console.log(command.id, command.name)
     }
@@ -61,6 +83,7 @@ while (true) {
 
   if (select.action === 'list') {
     const commands = await getApplicationsCommands(token)
+    console.log(`commands ${commands.length}/100`)
     for (const command of commands) {
       console.log(command.id, command.name, command)
     }

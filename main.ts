@@ -1,4 +1,4 @@
-import 'https://deno.land/std/dotenv/load.ts'
+import '@std/dotenv/load'
 
 import {Hono} from 'hono'
 import discord from './discord.ts'

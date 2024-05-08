@@ -1,6 +1,7 @@
 import {Spinner} from 'https://deno.land/std/cli/spinner.ts'
 import 'https://deno.land/std/dotenv/load.ts'
 import {
+Locale,
   RESTGetAPIApplicationCommandsResult,
   RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIApplicationCommandsResult,
@@ -57,6 +58,7 @@ export const postApplicationsCommands = async (
       headers: {
         authorization: `Bearer ${token.access_token}`,
         'content-type': 'application/json',
+        'Accept-Language': Locale.EnglishUS
       },
       body: JSON.stringify(data),
     }

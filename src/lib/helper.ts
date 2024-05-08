@@ -9,10 +9,13 @@ function statusColor(status: number) {
   return 'white'
 }
 
-export const loggerBody = <T>(options: {
-  pad?: number
-  logFn?: (data: T) => void
-} = {}) => {
+export const loggerBody = <T = unknown, O = unknown>(
+  options: {
+    pad?: number
+    logFn?: (data: T) => void
+    outgoing?: (data: O) => void
+  } = {}
+) => {
   options.pad ??= 0
   options.logFn ??= console.log
   const {pad} = options
@@ -23,20 +26,23 @@ export const loggerBody = <T>(options: {
       if (['GET', 'HEAD'].includes(c.req.method)) return await next()
 
       const start = performance.now()
-      console.log(
-        `<-- ${c.req.method.padStart(pad, padFill)} %c${c.req.url}`,
-        'color: green'
-      )
-
+      console.log(`<-- ${c.req.method.padStart(pad, padFill)} %c${c.req.url}`, 'color: green')
       c.req.header('content-type') === 'application/json'
         ? options.logFn!(await c.req.raw.clone().json())
         : console.log(await c.req.raw.clone().text())
 
       await next()
+
+      if (options.outgoing) {
+        c.res.headers.get('content-type')?.startsWith('application/json')
+          ? options.outgoing(await c.res.clone().json())
+          : console.log(await c.res.clone().text())
+      }
+
       console.log(
-        `--> ${c.req.method.padStart(pad, padFill)} %c${c.res.status} %c${
-          c.req.url
-        } %c${(performance.now() - start).toFixed(3)} ms`,
+        `--> ${c.req.method.padStart(pad, padFill)} %c${c.res.status} %c${c.req.url} %c${(
+          performance.now() - start
+        ).toFixed(3)} ms`,
         `color: ${statusColor(c.res.status)}`,
         'color: green',
         'color: blue'
