@@ -20,13 +20,15 @@ import {
   APIApplicationCommandSubcommandGroupOption,
   APIApplicationCommandSubcommandOption,
   APIApplicationCommandUserOption,
-  ApplicationCommandOptionType,
-  RESTPostAPIChatInputApplicationCommandsJSONBody,
+  RESTPostAPIChatInputApplicationCommandsJSONBody
 } from 'discord-api-types/v10'
-import {defineCommand} from './builder.ts'
 
-// {} | {} => {} & {}
+
+/** {} | {} => {} & {} */
 export type UnionToIntersection<U> = (U extends any ? (arg: U) => void : never) extends (arg: infer R) => void ? R : never
+
+/** unknown[] => {} | {} */
+export type Unpack<T extends unknown[] | undefined> = T extends Array<infer O> ? O : never
 
 export type ExtractOption<T extends APIApplicationCommandOption[] | undefined> = T extends unknown[] ? T[number] : T
 

@@ -4,11 +4,38 @@ import {ApplicationCommandOptionType, ApplicationCommandType} from 'discord-api-
 import {defineCommand} from '../src/builder2.ts'
 
 // {main: (c) => {}}
-const command = defineCommand({
+defineCommand({
   name: 'main',
   description: 'a',
 }).createHandler({
   main: (c) => {
+    c.command.name === 'main'
+    return c.reply({content: 'main'})
+  },
+})
+
+defineCommand({
+  name: 'main',
+  description: 'a',
+  options: [
+    {
+      type: ApplicationCommandOptionType.String,
+      name: "str",
+      description: "1",
+    },
+    {
+      type: ApplicationCommandOptionType.Integer,
+      name: "int",
+      description: "2",
+    }
+  ],
+}).createHandler({
+  main: (c) => {
+    c.command.name === 'main'
+    c.getOption('str').type === ApplicationCommandOptionType.String
+    c.getOption('str').name === 'str'
+    c.getOption('str').value
+
     return c.reply({content: 'main'})
   },
 })
@@ -32,10 +59,13 @@ const commandWithSubcommand = defineCommand({
       ],
     },
   ],
-})
-.createHandler({
+}).createHandler({
   test3: {
-    sub: (c) => c.reply({content: 'main'}),
+    sub: (c) => {
+      c.getOption('')
+
+      return c.reply({content: 'main'})
+    }
   },
 })
 
