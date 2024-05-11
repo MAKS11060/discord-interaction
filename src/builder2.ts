@@ -1,7 +1,6 @@
 #!/usr/bin/env -S deno run -A --watch
 
 import {
-  APIApplicationCommandBasicOption,
   APIApplicationCommandOption,
   APIApplicationCommandSubcommandGroupOption,
   APIApplicationCommandSubcommandOption,
@@ -19,8 +18,11 @@ import {UnionToIntersection, Unpack} from './types.ts'
 
 export class CommandCtx<
   C extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandOption,
+  T extends APIApplicationCommandOption
   // T extends APIApplicationCommandOption
-  T = C extends RESTPostAPIChatInputApplicationCommandsJSONBody ? C['options'] : APIApplicationCommandOption
+  // T extends APIApplicationCommandOption = C extends RESTPostAPIChatInputApplicationCommandsJSONBody
+  // ? Unpack<C['options']>
+  // : C
 > {
   command: C = {} as any
   options: T[]
@@ -47,6 +49,81 @@ export class CommandCtx<
     }
   }
 }
+
+type Handler<T> = (c: T) => APIInteractionResponse | Promise<APIInteractionResponse>
+
+// 1
+// type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['options'] extends Unpack<infer O>
+//   ? // ? {[K in T['name']]: ParseOption<Unpack<T['options']>>}
+//     // {[K in T['name']]: ParseOption<T>}
+//     {[K in T['name']]: Handler</* T */ CommandCtx<T, Unpack<T['options']>>>}
+//   : never
+
+// 2
+// type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+//   T extends RESTPostAPIChatInputApplicationCommandsJSONBody
+//     ? {[K in T['name']]: Handler</* T */ CommandCtx<T, Unpack<T['options']>>>}
+//     : never
+
+// 3
+type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+  T extends RESTPostAPIChatInputApplicationCommandsJSONBody
+    ? {[K in T['name']]: Handler</* T */ CommandCtx<T, Unpack<T['options']>>>}
+    : never
+
+type SubCommand<T extends APIApplicationCommandOption[] | undefined> = T extends Array<infer O>
+  ? O extends APIApplicationCommandSubcommandOption
+    ? /* O */ {[K in O['name']]: Handler</* T */ CommandCtx<O, Unpack<O['options']>>>}
+    : O extends APIApplicationCommandSubcommandGroupOption
+    ? SubCommand<O['options']>
+    : O extends APIApplicationCommandOption
+    ? O //{[K in O['name']]: Handler<CommandCtx<O, Unpack<O['options']>>>}
+    : never
+  : never
+
+type CommandScheme2<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+  T['options'] extends APIApplicationCommandOption[]
+    ? {[K in T['name']]: SubCommand<T['options']>}
+    : {[K in T['name']]: Handler<CommandCtx<T, Unpack<T['options']>>>}
+
+type C2 = CommandScheme2<{
+  name: 'test3'
+  description: 'a'
+  options: [
+  //   {
+  //     type: ApplicationCommandOptionType.Subcommand
+  //     name: 'sub'
+  //     description: 'b'
+  //     options: [
+        {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
+        {type: ApplicationCommandOptionType.Integer; name: 'int'; description: '2'}
+  //     ]
+  //   }
+  ]
+}>
+
+type C = SubCommand<
+  [
+    {
+      type: ApplicationCommandOptionType.SubcommandGroup
+      name: 'sub'
+      description: 'b'
+      options: [
+        {
+          type: ApplicationCommandOptionType.Subcommand
+          name: 'sub'
+          description: 'b'
+          options: [// {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
+          // {type: ApplicationCommandOptionType.Integer; name: 'int'; description: '2'}]
+        }
+      ]
+    }
+  ]
+>
+
+// init
+// type DefineHandler<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = UnionToIntersection<CommandScheme<T>>
+type DefineHandler<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = UnionToIntersection<CommandScheme2<T>>
 
 // type CC = CommandCtx<
 //   {name: 'test', description: 'd'},
@@ -116,62 +193,25 @@ type Schema<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['opti
 // : never
 // : (c: CommandCtx<Unpack<T['options']>>) => APIInteractionResponse | Promise<APIInteractionResponse>
 
-type Handler<T> = (c: T) => APIInteractionResponse | Promise<APIInteractionResponse>
-
-type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['options'] extends Unpack<infer O>
-  ? // ? {[K in T['name']]: ParseOption<Unpack<T['options']>>}
-    // {[K in T['name']]: ParseOption<T>}
-    {[K in T['name']]: Handler</* T */ CommandCtx<T, T['options']>>}
-  : never
-
-type C = DefineHandler<{
-  name: 'main'
-  description: 'a'
-  options: [
-    {
-      type: ApplicationCommandOptionType.String
-      name: 'str'
-      description: '1'
-    },
-    {
-      type: ApplicationCommandOptionType.String
-      name: 'str'
-      description: '1'
-    }
-  ]
-
-  // options: [
-  //   {
-  //     type: ApplicationCommandOptionType.Subcommand
-  //     name: 'str'
-  //     description: '1'
-  //     options: [
-  //       {
-  //         type: ApplicationCommandOptionType.String
-  //         name: 'str'
-  //         description: '1'
-  //       },
-  //       {
-  //         type: ApplicationCommandOptionType.Integer
-  //         name: 'int'
-  //         description: '2'
-  //       }
-  //     ]
-  //   }
-  //   // {
-  //   //   type: ApplicationCommandOptionType.String,
-  //   //   name: "str",
-  //   //   description: "1",
-  //   // },
-  //   // {
-  //   //   type: ApplicationCommandOptionType.Integer,
-  //   //   name: "int",
-  //   //   description: "2",
-  //   // }
-  // ]
-}>
-
-type DefineHandler<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = UnionToIntersection<CommandScheme<T>>
+// type C = DefineHandler<{
+//   name: 'main'
+//   description: 'a'
+//   options: [
+//     {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
+//     {type: ApplicationCommandOptionType.String; name: 'str2'; description: '2'}
+//   ]
+//   // options: [
+//   //   {
+//   //     type: ApplicationCommandOptionType.Subcommand
+//   //     name: 'str'
+//   //     description: '1'
+//   //     options: [
+//   //       {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
+//   //       {type: ApplicationCommandOptionType.Integer; name: 'int'; description: '2'}
+//   //     ]
+//   //   }
+//   // ]
+// }>
 
 const validateCommand = <T extends RESTPostAPIChatInputApplicationCommandsJSONBody>(command: T): T => {
   if (command.type === undefined || command.type === ApplicationCommandType.ChatInput) {

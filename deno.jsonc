@@ -1,4 +1,6 @@
 {
+  "name": "@maks11060/discord-interaction",
+  "version": "0.0.0",
   "lock": false,
   "tasks": {
     "dev": "deno run -A --unstable-hmr main.ts",
@@ -15,14 +17,13 @@
     "discord-api-types": "npm:discord-api-types",
     "hono": "npm:hono",
     "hono/factory": "npm:hono/factory",
-    "hono/logger": "npm:hono/logger",
     "zod": "npm:zod"
   },
-  "unstable": [
-    "kv"
-  ],
   "exports": {
     ".": "./mod.ts",
     "./hono": "./src/adapter/hono.ts"
-  }
+  },
+  "unstable": [
+    "kv"
+  ]
 }
