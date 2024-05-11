@@ -1,6 +1,6 @@
 # discord-interaction [WIP]
 
-
+<!--
 ```ts
 // commands.ts
 import {MessageFlags} from 'discord-api-types/v10'
@@ -55,4 +55,4 @@ Deno.serve(req => {
 
   return new Response('404 Not found', {status: 404})
 })
-```
+``` -->
