@@ -5,11 +5,11 @@ import {defineCommand} from '../src/builder2.ts'
 
 // {main: (c) => {}}
 defineCommand({
-  name: 'main',
+  name: 'test',
   description: 'a',
 }).createHandler({
-  main: (c) => {
-    c.command.name === 'main'
+  test: (c) => {
+    c.command.name === 'test'
     return c.reply({content: 'main'})
   },
 })

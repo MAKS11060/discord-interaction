@@ -17,236 +17,261 @@ import {
   APIApplicationCommandStringOption,
   APIApplicationCommandSubcommandGroupOption,
   APIApplicationCommandSubcommandOption,
-  APIApplicationCommandUserOption,
   ApplicationCommandOptionType,
+  APIApplicationCommandUserOption,
   ApplicationCommandType,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
-} from 'discord-api-types/v10'
-import {defineCommand} from './builder.ts'
+  APIInteractionResponse,
+  InteractionResponseType,
+  APIInteractionResponseCallbackData,
+  APIInteractionResponseChannelMessageWithSource,
+  APIInteractionResponseUpdateMessage,
+  APIApplicationCommandBasicOption,
+} from 'npm:discord-api-types/v10'
+import {commandSchema, userCommandSchema} from './schema.ts'
+import {UnionToIntersection, Unpack} from './types.ts'
+import {associateBy} from 'jsr:@std/collections'
 
-/* const test1 = defineCommand({
-  type: ApplicationCommandType.ChatInput,
+// const toArr = <const T extends APIApplicationCommandOption[]>(input: T) => input
+// const op = toArr([
+//   {type: ApplicationCommandOptionType.String, name: 'str', description: '1'},
+//   {type: ApplicationCommandOptionType.Integer, name: 'int', description: '2'},
+// ])
+// const o: OptionToObject<Unpack<typeof op>> = associateBy(op, (el) => el.name)
+
+const validateCommand = <T extends RESTPostAPIChatInputApplicationCommandsJSONBody>(command: T): T => {
+  if (command.type === undefined || command.type === ApplicationCommandType.ChatInput) {
+    return commandSchema.passthrough().parse(command) as T
+  } else if (command.type === ApplicationCommandType.Message || command.type === ApplicationCommandType.User) {
+    return userCommandSchema.passthrough().parse(command) as T
+  }
+  return commandSchema.passthrough().parse(command) as T
+}
+
+export const defineCommand = <const T extends RESTPostAPIChatInputApplicationCommandsJSONBody>(command: T) => {
+  validateCommand(command)
+
+  return {
+    command,
+    createHandler(handler: DefineHandler<T>) {
+      return {
+        command: validateCommand(command),
+        handler,
+      }
+    },
+  }
+}
+
+type isType<T extends APIApplicationCommandOption, Type extends ApplicationCommandOptionType> = T extends T & {
+  type: Type
+}
+  ? T
+  : never
+
+type OptionToObject<T extends APIApplicationCommandOption> = {
+  [K in T['name']]: T extends {name: K} ? T : never
+}
+
+// export class CommandCtx2<
+//   C extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandOption,
+//   T extends APIApplicationCommandOption
+// > {
+//   command: C
+//   options: OptionToObject<T>
+//   constructor(command: C, options?: OptionToObject<T>) {
+//     this.command = command || {} as any
+//     this.options = options || {} as any
+//   }
+// }
+
+export class CommandCtx<
+  C extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandOption,
+  T extends APIApplicationCommandOption
+> {
+  command: C = {} as any
+  options: T[]
+  constructor(command: C, options?: T[]) {
+    this.command = command
+    this.options = options || []
+  }
+
+  getOption<K extends T['name']>(name: K): T extends {name: K} ? T : never {
+    return this.options.find((option) => option.name === name) as any
+  }
+
+  getString<K extends isType<T, ApplicationCommandOptionType.String>['name']>(
+    name: K
+  ): T extends {name: K} ? T : never {
+    return this.options.find(
+      (option) => option.type === ApplicationCommandOptionType.String && option.name === name
+    ) as any
+  }
+
+  getInteger<K extends isType<T, ApplicationCommandOptionType.Integer>['name']>(
+    name: K
+  ): T extends {name: K} ? T : never {
+    return this.options.find(
+      (option) => option.type === ApplicationCommandOptionType.Integer && option.name === name
+    ) as any
+  }
+
+  /** send a message in response */
+  reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data,
+    }
+  }
+  replyUpdate(data: APIInteractionResponseCallbackData): APIInteractionResponseUpdateMessage {
+    return {
+      type: InteractionResponseType.UpdateMessage,
+      data,
+    }
+  }
+}
+
+type Handler<T> = (c: T) => APIInteractionResponse | Promise<APIInteractionResponse>
+
+type DefineHandler<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = UnionToIntersection<CommandScheme<T>>
+
+// ============================================================
+type EmptyArray<T> = T extends [] ? never : T
+
+type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+  T['options'] extends APIApplicationCommandOption[] & EmptyArray<T['options']>
+    ? T['options'] extends Array<infer O> // 0
+      ? // ? O extends APIApplicationCommandOption
+        O extends APIApplicationCommandBasicOption
+        ? {[K in T['name']]: Handler<CommandCtx<T, Unpack<T['options']>>>} // 0(1)
+        : // : 1
+        O extends APIApplicationCommandSubcommandOption
+        ? {
+            [K in T['name']]: {
+              [N in O['name']]: Handler<CommandCtx<O, Unpack<O['options']>>> // 1(2)
+            }
+          }
+        : O extends APIApplicationCommandSubcommandGroupOption
+        ? {
+            // 0
+            [K in T['name']]: {
+              // [N in O['name']]: Handler<CommandCtx<O, Unpack<O['options']>>> // 2(3)
+              // {[S in O['name']]: }
+              // [N in O['name']]: O extends APIApplicationCommandSubcommandOption
+              // ? {
+              //     [KK in O['name']]: 3
+              //     // {
+              //       // [NN in O['name']]: Handler<CommandCtx<O, Unpack<O['options']>>> // 1(2)
+              //     // }
+              //   }
+              // : 2
+              [N in O['name']]: O['options'] extends Array<infer S>
+                ? S extends APIApplicationCommandSubcommandOption
+                  ? {[K in S['name']]: Handler<CommandCtx<S, Unpack<S['options']>>>}
+                  : 2
+                : 3
+            }
+          }
+        : 1
+      : {[K in T['name']]: Handler<CommandCtx<T, never>>}
+    : {[K in T['name']]: Handler<CommandCtx<T, never>>}
+
+//
+defineCommand({
   name: 'test',
-  description: '',
+  description: 'a',
+}).createHandler({
+  test: (c) => {
+    c.command.name === 'test'
+    return c.reply({content: 'main'})
+  },
+})
+defineCommand({
+  name: 'test2',
+  description: 'a',
   options: [
-    {
-      type: ApplicationCommandOptionType.Number,
-      name: 'num',
-      description: 'num',
-      required: true,
-    },
-    {
-      type: ApplicationCommandOptionType.Number,
-      name: 'num-2',
-      description: 'num 2',
-    },
-    {
-      type: ApplicationCommandOptionType.Subcommand,
-      name: 'sub-1',
-      description: 'sub',
-      options: [
-        {
-          type: ApplicationCommandOptionType.Boolean,
-          name: 'bool',
-          description: 'bool',
-        },
-      ],
-    },
+    {type: ApplicationCommandOptionType.String, name: 'str', description: '1'},
+    {type: ApplicationCommandOptionType.Integer, name: 'int', description: '2'},
   ],
-}).command
-const test2 = defineCommand({
-  type: ApplicationCommandType.ChatInput,
+}).createHandler({
+  test2: (c) => {
+    c.command.name === 'test2'
+    c.getOption('str').type === ApplicationCommandOptionType.String
+    c.getOption('str').name === 'str'
+
+    c.getString('str')
+    c.getInteger('int')
+
+    return c.reply({content: 'main'})
+  },
+})
+
+defineCommand({
+  name: 'test2',
+  description: 'a',
+  options: [
+    {type: ApplicationCommandOptionType.String, name: 'str', description: '1'},
+    {type: ApplicationCommandOptionType.Integer, name: 'int', description: '2'},
+  ],
+}).createHandler({
+  test2: (c) => {
+    c.command.name === 'test2'
+    c.getOption('str').type === ApplicationCommandOptionType.String
+    c.getOption('str').name === 'str'
+    return c.reply({content: 'main'})
+  },
+})
+
+defineCommand({
   name: 'test',
-  description: '',
+  description: 'a',
   options: [
     {
       type: ApplicationCommandOptionType.Subcommand,
       name: 'sub',
-      description: 'sub',
+      description: '1',
       options: [
-        {
-          type: ApplicationCommandOptionType.String,
-          name: 'str',
-          description: 'str',
-        },
+        {type: ApplicationCommandOptionType.String, name: 'str', description: '1'},
+        {type: ApplicationCommandOptionType.Integer, name: 'int', description: '2'},
       ],
     },
+  ],
+}).createHandler({
+  test: {
+    sub: (c) => {
+      c.getInteger('int')
+      return c.reply({content: ''})
+    },
+  },
+})
+
+defineCommand({
+  name: 'test', // 0
+  description: 'a',
+  options: [
     {
+      name: 'sub group', // 1
+      description: 's-g',
       type: ApplicationCommandOptionType.SubcommandGroup,
-      name: 'sub g',
-      description: 'sub g',
       options: [
         {
           type: ApplicationCommandOptionType.Subcommand,
-          name: 'sub 2',
-          description: 'sub 2',
+          name: 'sub', // 2
+          description: '1',
           options: [
-            {
-              type: ApplicationCommandOptionType.Number,
-              name: 'num',
-              description: 'num',
-            },
-            {
-              type: ApplicationCommandOptionType.Number,
-              name: 'num-2',
-              description: 'num 2',
-            },
+            {type: ApplicationCommandOptionType.String, name: 'str', description: '1'},
+            {type: ApplicationCommandOptionType.Integer, name: 'int', description: '2'},
           ],
         },
       ],
     },
   ],
-}).command
-const test3 = defineCommand({
-  type: ApplicationCommandType.ChatInput,
-  name: 'test',
-  description: '',
-  options: [
-    {
-      type: ApplicationCommandOptionType.Subcommand,
-      name: 'sub',
-      description: 'sub',
-      required: true,
-      options: [
-        {
-          type: ApplicationCommandOptionType.String,
-          name: 'str2',
-          description: 'str2',
-          required: true,
-        },
-        {
-          type: ApplicationCommandOptionType.Integer,
-          name: 'int',
-          description: 'int',
-        },
-        {
-          type: ApplicationCommandOptionType.String,
-          name: 'str2',
-          description: 'str2',
-          required: true,
-        },
-        {
-          type: ApplicationCommandOptionType.String,
-          name: 'str',
-          description: 'str',
-        },
-      ],
+}).createHandler({
+  test: {
+    'sub group': {
+      sub: (c) => {
+        c.getInteger('int')
+        return c.reply({content: ''})
+      },
     },
-    // {
-    //   type: ApplicationCommandOptionType.Integer,
-    //   name: 'int',
-    //   description: 'int',
-    // },
-    // {
-    //   type: ApplicationCommandOptionType.String,
-    //   name: 'str2',
-    //   description: 'str2',
-    //   required: true,
-    // },
-    // {
-    //   type: ApplicationCommandOptionType.String,
-    //   name: 'str',
-    //   description: 'str',
-    // },
-  ],
-}).command
-
-type A = Scheme<typeof test3>
-type B = A['sub']
-
-type ExtractOption<T extends APIApplicationCommandOption[] | undefined> = T extends unknown[] ? T[number] : T
-
-type ParseOption<T extends APIApplicationCommandOption | undefined> = T extends APIApplicationCommandSubcommandOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: ParseOption<ExtractOption<T['options']>>}
-    : {[K in T['name']]?: ParseOption<ExtractOption<T['options']>>}
-  : T extends APIApplicationCommandSubcommandGroupOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: ParseOption<ExtractOption<T['options']>>}
-    : {[K in T['name']]?: ParseOption<ExtractOption<T['options']>>}
-  : T extends APIApplicationCommandStringOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: APIApplicationCommandInteractionDataStringOption}
-    : {[K in T['name']]?: APIApplicationCommandInteractionDataStringOption}
-  : T extends APIApplicationCommandIntegerOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: APIApplicationCommandInteractionDataIntegerOption}
-    : {[K in T['name']]?: APIApplicationCommandInteractionDataIntegerOption}
-  : T extends APIApplicationCommandBooleanOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: APIApplicationCommandInteractionDataBooleanOption}
-    : {[K in T['name']]?: APIApplicationCommandInteractionDataBooleanOption}
-  : T extends APIApplicationCommandUserOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: APIApplicationCommandInteractionDataUserOption}
-    : {[K in T['name']]?: APIApplicationCommandInteractionDataUserOption}
-  : T extends APIApplicationCommandChannelOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: APIApplicationCommandInteractionDataChannelOption}
-    : {[K in T['name']]?: APIApplicationCommandInteractionDataChannelOption}
-  : T extends APIApplicationCommandRoleOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: APIApplicationCommandInteractionDataRoleOption}
-    : {[K in T['name']]?: APIApplicationCommandInteractionDataRoleOption}
-  : T extends APIApplicationCommandMentionableOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: APIApplicationCommandInteractionDataMentionableOption}
-    : {[K in T['name']]?: APIApplicationCommandInteractionDataMentionableOption}
-  : T extends APIApplicationCommandAttachmentOption
-  ? T extends {required: true}
-    ? {[K in T['name']]: APIApplicationCommandInteractionDataAttachmentOption}
-    : {[K in T['name']]?: APIApplicationCommandInteractionDataAttachmentOption}
-  : never
-
-type Scheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['options'] extends Array<infer O>
-  ? O extends APIApplicationCommandOption
-    ? ParseOption<O>
-    : never
-  : never
- */
-
-// type FlatOptions<T extends APIApplicationCommandOption[] | undefined> = T extends Array<infer E>
-//   ? E extends APIApplicationCommandBasicOption
-//     ? E['name']
-//     : E extends APIApplicationCommandSubcommandOption
-//     ? FlatOptions<E['options']>
-//     : never
-//   : never
-
-// type T = FlatOptions<(typeof test1)['options']>
-
-// type FlattenObjectKeys<T extends Record<string, unknown>, Key = keyof T> = Key extends string
-//   ? T[Key] extends Record<string, unknown>
-//     ? `${Key}.${FlattenObjectKeys<T[Key]>}`
-//     : `${Key}`
-//   : never
-
-// type A<T extends typeof d> = T['options'] extends Array<infer E>
-//   ? E extends APIApplicationCommandOption
-//     ? FlatOptions<E>
-//     : never
-//   : never
-
-// type T = A<typeof d>
-
-// type ToScheme<> =
-
-/* type S = {
-  name: string
-  arr?: S[]
-}
-
-type Scheme<T extends S> = {
-  // [K in keyof T]: T[K] extends Array<infer A>
-  //   ? A
-  //   : T[K]
-  [K in keyof T]: T[K]
-}
-
-type D = {name: '1'; arr: [{name: '2'}, {name: '3'}]}
-type Result = Scheme<D>
-const result = {
-  '1': {name: '1'},
-  '2': {name: '2'},
-  '3': {name: '3'},
-} */
+  },
+})

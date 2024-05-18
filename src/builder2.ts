@@ -66,64 +66,124 @@ type Handler<T> = (c: T) => APIInteractionResponse | Promise<APIInteractionRespo
 //     : never
 
 // 3
-type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
-  T extends RESTPostAPIChatInputApplicationCommandsJSONBody
-    ? {[K in T['name']]: Handler</* T */ CommandCtx<T, Unpack<T['options']>>>}
-    : never
+// type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+//   T extends RESTPostAPIChatInputApplicationCommandsJSONBody
+//     ? {[K in T['name']]: Handler</* T */ CommandCtx<T, Unpack<T['options']>>>}
+//     : never
 
-type SubCommand<T extends APIApplicationCommandOption[] | undefined> = T extends Array<infer O>
-  ? O extends APIApplicationCommandSubcommandOption
-    ? /* O */ {[K in O['name']]: Handler</* T */ CommandCtx<O, Unpack<O['options']>>>}
-    : O extends APIApplicationCommandSubcommandGroupOption
-    ? SubCommand<O['options']>
-    : O extends APIApplicationCommandOption
-    ? O //{[K in O['name']]: Handler<CommandCtx<O, Unpack<O['options']>>>}
+// type SubCommand<T extends APIApplicationCommandOption[] | undefined> = T extends Array<infer O>
+//   ? O extends APIApplicationCommandSubcommandOption
+//     ? /* O */ {[K in O['name']]: Handler</* T */ CommandCtx<O, Unpack<O['options']>>>}
+//     : O extends APIApplicationCommandSubcommandGroupOption
+//     ? SubCommand<O['options']>
+//     : O extends APIApplicationCommandOption
+//     ? O //{[K in O['name']]: Handler<CommandCtx<O, Unpack<O['options']>>>}
+//     : never
+//   : never
+
+// type CommandScheme2<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+//   T['options'] extends APIApplicationCommandOption[]
+//     ? {[K in T['name']]: SubCommand<T['options']>}
+//     : {[K in T['name']]: Handler<CommandCtx<T, Unpack<T['options']>>>}
+
+// type C2 = CommandScheme2<{
+//   name: 'test3'
+//   description: 'a'
+//   options: [
+//   //   {
+//   //     type: ApplicationCommandOptionType.Subcommand
+//   //     name: 'sub'
+//   //     description: 'b'
+//   //     options: [
+//         {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
+//         {type: ApplicationCommandOptionType.Integer; name: 'int'; description: '2'}
+//   //     ]
+//   //   }
+//   ]
+// }>
+
+// type C = SubCommand<
+//   [
+//     {
+//       type: ApplicationCommandOptionType.SubcommandGroup
+//       name: 'sub'
+//       description: 'b'
+//       options: [
+//         {
+//           type: ApplicationCommandOptionType.Subcommand
+//           name: 'sub'
+//           description: 'b'
+//           options: [// {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
+//           // {type: ApplicationCommandOptionType.Integer; name: 'int'; description: '2'}]
+//         }
+//       ]
+//     }
+//   ]
+// >
+
+/* type EmptyArray<T> = T extends [] ? never : T
+
+type Test<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+  T['options'] extends APIApplicationCommandOption[] & EmptyArray<T['options']>
+    ? 0
+    : {[K in T['name']]: Handler<CommandCtx<T, never>>} */
+
+// type Test<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+//   T['options'] extends APIApplicationCommandOption[]
+//     ? {[K in T['name']]: Handler<CommandCtx<T, Unpack<T['options']>>>}
+//     : {[K in T['name']]: Handler<CommandCtx<T, never>>}
+
+type Test<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['options'] extends Array<infer O>
+  ? O extends APIApplicationCommandOption
+    ? {[K in O['name']]: Handler<CommandCtx<O, never>>}
     : never
   : never
 
-type CommandScheme2<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
-  T['options'] extends APIApplicationCommandOption[]
-    ? {[K in T['name']]: SubCommand<T['options']>}
-    : {[K in T['name']]: Handler<CommandCtx<T, Unpack<T['options']>>>}
+// ? {[K in T['name']]: Handler<CommandCtx<T, Unpack<T['options']>>>}
+// : {[K in T['name']]: Handler<CommandCtx<T, never>>}
 
-type C2 = CommandScheme2<{
+type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+  T['options'] extends APIApplicationCommandOption[]
+    ? T['options'] extends any[]
+      ? {[K in T['name']]: Handler<CommandCtx<T, Unpack<T['options']>>>}
+      : T
+    : {[K in T['name']]: Handler<CommandCtx<T, never>>}
+
+// ============================================================
+type O1 = {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'}
+type O2 = {type: ApplicationCommandOptionType.Subcommand; name: 'sub'; description: '2'; options: [O1]}
+type O3 = {type: ApplicationCommandOptionType.SubcommandGroup; name: 'str'; description: '3'; options: [O2]}
+type A = Test<{name: 'test'; description: 'a'}>
+type B = Test<{name: 'test'; description: 'a'; options: []}>
+type C = Test<{name: 'test'; description: 'a'; options: [O1]}>
+type D = Test<{name: 'test'; description: 'a'; options: [O3]}>
+
+type DefineHandler<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = UnionToIntersection<CommandScheme<T>>
+type test1 = DefineHandler<{name: 'test'; description: 'a'}>
+type test11 = DefineHandler<{name: 'test'; description: 'a'; options: []}>
+type test2 = DefineHandler<{
+  name: 'test2'
+  description: 'a'
+  options: [
+    {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
+    {type: ApplicationCommandOptionType.Integer; name: 'int'; description: '2'}
+  ]
+}>
+type test3 = DefineHandler<{
   name: 'test3'
   description: 'a'
   options: [
-  //   {
-  //     type: ApplicationCommandOptionType.Subcommand
-  //     name: 'sub'
-  //     description: 'b'
-  //     options: [
-        {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
-        {type: ApplicationCommandOptionType.Integer; name: 'int'; description: '2'}
-  //     ]
-  //   }
-  ]
-}>
-
-type C = SubCommand<
-  [
     {
-      type: ApplicationCommandOptionType.SubcommandGroup
+      type: ApplicationCommandOptionType.Subcommand
       name: 'sub'
       description: 'b'
       options: [
-        {
-          type: ApplicationCommandOptionType.Subcommand
-          name: 'sub'
-          description: 'b'
-          options: [// {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
-          // {type: ApplicationCommandOptionType.Integer; name: 'int'; description: '2'}]
-        }
+        {type: ApplicationCommandOptionType.String; name: 'str'; description: '1'},
+        {type: ApplicationCommandOptionType.Integer; name: 'int'; description: '2'}
       ]
     }
   ]
->
-
-// init
-// type DefineHandler<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = UnionToIntersection<CommandScheme<T>>
-type DefineHandler<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = UnionToIntersection<CommandScheme2<T>>
+}>
 
 // type CC = CommandCtx<
 //   {name: 'test', description: 'd'},

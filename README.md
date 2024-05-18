@@ -11,6 +11,11 @@
 [CI badge]: https://github.com/maks11060/discord-interaction/actions/workflows/ci.yml/badge.svg
 
 <!--
+## Install using deno install
+> deno install -Arfg -n deploydiscord jsr:@maks11060/discord-interaction
+-->
+
+<!--
 ## Usage
 
 Define commands:
