@@ -35,8 +35,8 @@ const commandOptionSchemaRefine = (v: z.TypeOf<typeof commandOptionSchema>[]) =>
   return true
 }
 
-// {                0 main scope
-//   options: {     1 sub group
+// {                0 root
+//   options: {     1 sub-group / sub
 //     options: {   2 sub
 //       options: { 3 options
 //       }
@@ -68,10 +68,10 @@ export const commandOptionsSchema = z // 1
     })
   )
   .max(25)
-  .refine(
-    commandOptionSchemaRefine,
-    'Sub-command and sub-command group option types are mutually exclusive to all other types'
-  )
+  // .refine(
+  //   commandOptionSchemaRefine,
+  //   'Sub-command and sub-command group option types are mutually exclusive to all other types'
+  // )
 
 export const commandSchema = z
   .object({
@@ -84,6 +84,7 @@ export const commandSchema = z
     nsfw: z.boolean().optional(),
   })
   .passthrough()
+
 
 export const userCommandSchema = commandSchema.omit({
   description: true,

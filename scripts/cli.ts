@@ -4,7 +4,6 @@ import {parseArgs} from '@std/cli'
 import {resolve, toFileUrl} from '@std/path'
 import {RESTOAuth2ImplicitAuthorizationURLFragmentResult} from 'discord-api-types/v10'
 import {Checkbox, Select, prompt} from 'https://deno.land/x/cliffy/prompt/mod.ts'
-// import {commands} from '../src/commands.ts'
 import {
   clientId,
   deleteApplicationsCommands,
@@ -14,23 +13,60 @@ import {
 } from './_utils.ts'
 
 const args = parseArgs(Deno.args, {
-  string: ['c', 'commands'],
+  string: ['i', 'guild'],
+  boolean: ['h', 'help'],
   alias: {
-    commands: 'c',
-  },
-  default: {
-    commands: './src/commands.ts',
+    h: 'help',
+    i: 'guild',
   },
 })
+// console.log(args)
 
-console.log(`load: ${resolve(Deno.cwd(), args.commands).toString()}`)
+const printOptions = (options: {arg: string; description: string}[], offset = 4) => {
+  let padding = 0
+  for (const option of options) padding = Math.max(padding, option.arg.length)
+  for (const option of options) {
+    console.log(
+      `${''.padEnd(offset, ' ')}%c${option.arg.padEnd(padding + 1, ' ')} %c${option.description}`,
+      'color: blue',
+      'color: inherit'
+    )
+  }
+}
 
-const commands = await import(toFileUrl(resolve(Deno.cwd(), args.commands)).toString()).then(r => {
-  return r.commands
-}).catch((e) => {
-  console.error('invalid commands file')
-  Deno.exit(1)
-})
+const help = `%cdeploydiscord Help
+
+%cUsage: %cdeploydiscord %c./commands.ts
+
+%cOptions:`
+
+if (args.help || !args._.length) {
+  console.log(
+    help,
+    'color: green',
+    'color: blue',
+    'color: green',
+    'color: inherit; text-decoration: underline',
+    'color: blue'
+  )
+  printOptions([
+    {arg: '-i, --guild', description: 'Guild id for deploy commands'},
+    {arg: '-h, --help', description: 'Print help'},
+  ])
+  Deno.exit(0)
+}
+
+const commandsPath = resolve(Deno.cwd(), args._[0].toString()).toString()
+console.log(`load: ${commandsPath}`)
+
+const commands = await import(toFileUrl(commandsPath).toString())
+  .then((r) => {
+    return r.commands
+  })
+  .catch((e) => {
+    console.error('invalid commands file')
+    Deno.exit(1)
+  })
 
 const kv = await Deno.openKv()
 
@@ -63,8 +99,9 @@ while (import.meta.main) {
       message: 'Select action',
       options: [
         {value: 'get', name: 'Get commands'},
-        {value: 'list', name: 'List commands with details'},
+        {value: 'list', name: 'Get commands JSON'},
         {value: 'deploy', name: 'Deploy commands'},
+        // ...(args?.guild ? [{value: 'deploy-guild', name: `Deploy commands guild(${args.guild})`}] : []),
         {value: 'delete', name: 'Delete commands'},
         {value: 'exit', name: 'Close CLI'},
       ],
@@ -74,16 +111,16 @@ while (import.meta.main) {
   if (select.action === 'exit') break
 
   if (select.action === 'get') {
-    const commands = await getApplicationsCommands(token)
-    console.log(`commands ${commands.length}/100`)
+    const commands = await getApplicationsCommands(token, args?.guild)
+    console.log(`%cCommands ${commands.length}/100`, 'color: blue')
     for (const command of commands) {
       console.log(command.id, command.name)
     }
   }
 
   if (select.action === 'list') {
-    const commands = await getApplicationsCommands(token)
-    console.log(`commands ${commands.length}/100`)
+    const commands = await getApplicationsCommands(token, args?.guild)
+    console.log(`%cCommands ${commands.length}/100`, 'color: blue')
     for (const command of commands) {
       console.log(command.id, command.name, command)
     }
@@ -100,14 +137,14 @@ while (import.meta.main) {
     ])
 
     for (const item of (deploy as any[]) || []) {
-      const {errors, ...deploy} = await postApplicationsCommands(token, item)
-      if (!errors) console.log(`Deploy: %c${deploy.id} ${item.name}`, 'color: green;')
+      const {errors, ...deploy} = await postApplicationsCommands(token, item, args?.guild)
+      if (!errors) console.log(`Deploy: %c${deploy.id} ${item.name}`, 'color: green')
       else console.error(`Deploy: ${item.name}`, JSON.stringify(errors, null, 2))
     }
   }
 
   if (select.action === 'delete') {
-    const commands = await getApplicationsCommands(token)
+    const commands = await getApplicationsCommands(token, args?.guild)
     const select = await prompt([
       {
         type: Checkbox,
@@ -118,7 +155,7 @@ while (import.meta.main) {
     ])
 
     for (const item of select?.name || []) {
-      console.log(`Delete: ${item}`, await deleteApplicationsCommands(token, item))
+      console.log(`Delete: ${item}`, await deleteApplicationsCommands(token, item, args?.guild))
     }
   }
 }

@@ -1,13 +1,28 @@
 /**
- * Adapter for {@link https://hono.dev Hono} framework
  * @module
+ * Adapter for {@link https://hono.dev Hono} framework
+ *
+ * @example Usage hono framework
+ * ```ts
+ * import {Hono} from 'hono'
+ * import {discordInteraction, importKeyRaw} from '@maks11060/discord-interaction/hono'
+ *
+ * const app = new Hono()
+ * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
+ *
+ * app.post('/interaction', ...discordInteraction(key, []))
+ *
+ * Deno.serve(app.fetch)
+ * ```
  */
 
-import {APIInteraction} from 'discord-api-types/v10'
+import type {APIInteraction} from 'discord-api-types/v10'
 import {createFactory, createMiddleware} from 'hono/factory'
-import {Handler} from '../builder.ts'
+import type {Handler} from '../builder0.ts'
 import {createHandler} from '../interaction.ts'
 import {verifyRequestSignature as verifyRequest} from '../lib/ed25519.ts'
+
+export {importKeyRaw} from '../lib/ed25519.ts'
 
 /**
  * Verify {@linkcode Request} signature using {@linkcode CryptoKey}(publicKey).
@@ -29,12 +44,12 @@ export const verifyRequestSignature = (key: CryptoKey) => {
  * @example
  * ```ts
  * import {Hono} from 'hono'
- * import {discordInteraction} from './hono.ts'
+ * import {discordInteraction} from '@maks11060/discord-interaction/hono'
  *
  * const app = new Hono()
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
  *
- * app.post('/interaction', ...discordInteraction(key, commands))
+ * app.post('/interaction', ...discordInteraction(key, []))
  * ```
  */
 export const discordInteraction = (key: CryptoKey, commands: Handler<any>[]) => {

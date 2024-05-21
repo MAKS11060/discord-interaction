@@ -1,7 +1,7 @@
 import {Spinner} from 'https://deno.land/std/cli/spinner.ts'
 import 'https://deno.land/std/dotenv/load.ts'
 import {
-Locale,
+  Locale,
   RESTGetAPIApplicationCommandsResult,
   RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIApplicationCommandsResult,
@@ -32,11 +32,11 @@ export const getToken = async () => {
   return token as RESTPostOAuth2ClientCredentialsResult
 }
 
-export const getApplicationsCommands = async (
-  token: RESTPostOAuth2ClientCredentialsResult
-) => {
+export const getApplicationsCommands = async (token: RESTPostOAuth2ClientCredentialsResult, guild?: string) => {
   const res = await fetch(
-    `https://discord.com/api/v10/applications/${clientId}/commands`,
+    guild
+      ? `https://discord.com/api/v10/applications/${clientId}/guilds/${guild}/commands`
+      : `https://discord.com/api/v10/applications/${clientId}/commands`,
     {
       headers: {
         authorization: `Bearer ${token.access_token}`,
@@ -49,16 +49,19 @@ export const getApplicationsCommands = async (
 
 export const postApplicationsCommands = async (
   token: RESTPostOAuth2ClientCredentialsResult,
-  data: RESTPostAPIApplicationCommandsJSONBody
+  data: RESTPostAPIApplicationCommandsJSONBody,
+  guild?: string
 ) => {
   const res = await fetch(
-    `https://discord.com/api/v10/applications/${clientId}/commands`,
+    guild
+      ? `https://discord.com/api/v10/applications/${clientId}/guilds/${guild}/commands`
+      : `https://discord.com/api/v10/applications/${clientId}/commands`,
     {
       method: 'POST',
       headers: {
         authorization: `Bearer ${token.access_token}`,
         'content-type': 'application/json',
-        'Accept-Language': Locale.EnglishUS
+        'Accept-Language': Locale.EnglishUS,
       },
       body: JSON.stringify(data),
     }
@@ -69,10 +72,13 @@ export const postApplicationsCommands = async (
 
 export const deleteApplicationsCommands = async (
   token: RESTPostOAuth2ClientCredentialsResult,
-  id: string
+  id: string,
+  guild?: string
 ) => {
   const res = await fetch(
-    `https://discord.com/api/v10/applications/${clientId}/commands/${id}`,
+    guild
+      ? `https://discord.com/api/v10/applications/${clientId}/guilds/${guild}/commands/${id}`
+      : `https://discord.com/api/v10/applications/${clientId}/commands/${id}`,
     {
       method: 'DELETE',
       headers: {

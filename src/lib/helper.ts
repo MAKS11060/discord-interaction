@@ -12,12 +12,12 @@ function statusColor(status: number) {
 export const loggerBody = <T = unknown, O = unknown>(
   options: {
     pad?: number
-    logFn?: (data: T) => void
+    incoming?: (data: T) => void
     outgoing?: (data: O) => void
   } = {}
 ) => {
   options.pad ??= 0
-  options.logFn ??= console.log
+  options.incoming ??= console.log
   const {pad} = options
   const padFill = ' '
 
@@ -28,7 +28,7 @@ export const loggerBody = <T = unknown, O = unknown>(
       const start = performance.now()
       console.log(`<-- ${c.req.method.padStart(pad, padFill)} %c${c.req.url}`, 'color: green')
       c.req.header('content-type') === 'application/json'
-        ? options.logFn!(await c.req.raw.clone().json())
+        ? options.incoming!(await c.req.raw.clone().json())
         : console.log(await c.req.raw.clone().text())
 
       await next()

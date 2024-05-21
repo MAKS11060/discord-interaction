@@ -1,5 +1,5 @@
 import {
-APIActionRowComponent,
+  APIActionRowComponent,
   APIEmbed,
   APIMessageActionRowComponent,
   ApplicationCommandOptionType,
@@ -8,8 +8,8 @@ APIActionRowComponent,
   ComponentType,
   MessageFlags,
 } from 'discord-api-types/v10'
-import {defineCommand} from './builder.ts'
-import {Danbooru, Post} from './ext/danbooru.ts'
+import {defineCommand} from '../src/builder0.ts'
+import {Danbooru, type Post} from '../src/ext/danbooru.ts'
 
 const help = defineCommand({
   name: 'help',
