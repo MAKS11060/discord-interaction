@@ -1,19 +1,30 @@
 import {
-APIApplicationCommandAutocompleteResponse,
-APICommandAutocompleteInteractionResponseCallbackData,
+  APIApplicationCommandAutocompleteResponse,
+  APICommandAutocompleteInteractionResponseCallbackData,
   APIInteraction,
   APIInteractionResponse,
   APIInteractionResponseCallbackData,
   APIInteractionResponseChannelMessageWithSource,
   APIInteractionResponseUpdateMessage,
+  APIModalActionRowComponent,
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  ComponentType,
   InteractionResponseType,
   InteractionType,
   MessageFlags,
+  TextInputStyle,
 } from 'discord-api-types/v10'
-// import {Handler, InteractionContext} from './builder.ts'
-import { Handler } from './builder.ts'
+import {Handler} from './builder.ts'
 import {verifyRequestSignature} from './lib/ed25519.ts'
-import { InteractionContext } from "./builder0.ts";
+import {InteractionContext} from './builder0.ts'
+import {
+  ApplicationCommandAutocompleteContext,
+  ApplicationCommandContext,
+  MessageComponentContext,
+  ModalContext,
+} from './context.ts'
+import {deepMerge} from 'jsr:@std/collections'
 
 const unknownCommand = (): APIInteractionResponse => {
   return {
@@ -35,19 +46,73 @@ const errorCommand = (text: string): APIInteractionResponse => {
   }
 }
 
-
-
+{
+}
 export const createHandler = (commands: Handler[]) => {
-  const list = commands.map(({command, executor}) => {
-    return {command, handler: executor(command)}
-  })
+  let obj = {}
+
+  for (const command of commands) {
+    obj = deepMerge(obj, command.handler)
+  }
+  console.log(obj)
 
   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
     if (interaction.type === InteractionType.Ping) {
       return {type: InteractionResponseType.Pong}
     }
 
+    if (interaction.type === InteractionType.ApplicationCommand) {
+      const c = new ApplicationCommandContext()
 
+      if (interaction.data.type === ApplicationCommandType.ChatInput) {
+        if (!interaction.data.options) {
+          return obj[interaction.data.name](c)
+        }
+
+        if (interaction.data.options) {
+          for (const option of interaction.data.options) {
+            if (option.type === ApplicationCommandOptionType.Subcommand) {
+              return obj[interaction.data.name][option.name](c)
+            }
+
+            if (option.type === ApplicationCommandOptionType.SubcommandGroup) {
+              for (const subOption of option.options) {
+                if (subOption.type === ApplicationCommandOptionType.Subcommand) {
+                  return obj[interaction.data.name][option.name][subOption.name](c)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (interaction.type === InteractionType.MessageComponent) {
+      const c = new MessageComponentContext()
+    }
+
+    if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
+      const c = new ApplicationCommandAutocompleteContext()
+    }
+
+    if (interaction.type === InteractionType.ModalSubmit) {
+      const c = new ModalContext()
+    }
+
+    return unknownCommand()
+  }
+}
+
+export const createHandler2 = (commands: Handler[]) => {
+  const list = commands.map(({command, executor}) => {
+    // return {command, handler: executor(command)}
+  })
+  console.log(commands)
+
+  return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
+    if (interaction.type === InteractionType.Ping) {
+      return {type: InteractionResponseType.Pong}
+    }
 
     if (interaction.type === InteractionType.ApplicationCommand) {
       for (const {command, handler} of list) {
@@ -85,6 +150,7 @@ export const createHandler = (commands: Handler[]) => {
     }
 
     if (interaction.type === InteractionType.ModalSubmit) {
+      new ModalContext()
       return errorCommand('no implemented ModalSubmit')
     }
 

@@ -7,6 +7,8 @@ import {
   APIApplicationCommandAutocompleteResponse,
   APIInteractionResponseDeferredMessageUpdate,
   APIInteractionResponseDeferredChannelMessageWithSource,
+  APIModalInteractionResponseCallbackData,
+  APIModalInteractionResponse,
 } from 'discord-api-types/v10'
 
 export class ApplicationCommandContext {
@@ -42,6 +44,13 @@ export class ApplicationCommandContext {
       type: InteractionResponseType.DeferredMessageUpdate,
     }
   }
+
+  modal(data: APIModalInteractionResponseCallbackData): APIModalInteractionResponse {
+    return {
+      type: InteractionResponseType.Modal,
+      data,
+    }
+  }
 }
 
 export class ApplicationCommandAutocompleteContext {
@@ -55,6 +64,25 @@ export class ApplicationCommandAutocompleteContext {
 
 export class MessageComponentContext {
   /* TODO */
+}
+
+export class ModalContext {
+  reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data,
+    }
+  }
+
+  /* TODO: add a callback to interact with the response */
+  deferredReply(
+    data: Pick<APIInteractionResponseCallbackData, 'flags'>
+  ): APIInteractionResponseDeferredChannelMessageWithSource {
+    return {
+      type: InteractionResponseType.DeferredChannelMessageWithSource,
+      data,
+    }
+  }
 }
 
 /* TODO: use functions
