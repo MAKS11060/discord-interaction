@@ -15,16 +15,17 @@ import {
   MessageFlags,
   TextInputStyle,
 } from 'discord-api-types/v10'
-import {Handler} from './builder.ts'
 import {verifyRequestSignature} from './lib/ed25519.ts'
 import {InteractionContext} from './builder0.ts'
 import {
   ApplicationCommandAutocompleteContext,
   ApplicationCommandContext,
+  ContextMenuCommandContext,
   MessageComponentContext,
   ModalContext,
 } from './context.ts'
-import {deepMerge} from 'jsr:@std/collections'
+import {deepMerge} from '@std/collections'
+import {Command} from './types.ts'
 
 const unknownCommand = (): APIInteractionResponse => {
   return {
@@ -46,14 +47,12 @@ const errorCommand = (text: string): APIInteractionResponse => {
   }
 }
 
-{
-}
-export const createHandler = (commands: Handler[]) => {
+export const createHandler = (commands: Command[]) => {
   let obj = {}
-
   for (const command of commands) {
     obj = deepMerge(obj, command.handler)
   }
+
   console.log(obj)
 
   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
@@ -62,9 +61,9 @@ export const createHandler = (commands: Handler[]) => {
     }
 
     if (interaction.type === InteractionType.ApplicationCommand) {
-      const c = new ApplicationCommandContext()
-
       if (interaction.data.type === ApplicationCommandType.ChatInput) {
+        const c = new ApplicationCommandContext()
+
         if (!interaction.data.options) {
           return obj[interaction.data.name](c)
         }
@@ -84,6 +83,16 @@ export const createHandler = (commands: Handler[]) => {
             }
           }
         }
+      }
+
+      if (interaction.data.type === ApplicationCommandType.User) {
+        const c = new ContextMenuCommandContext(obj[interaction.data.name])
+        return obj[interaction.data.name](c)
+      }
+
+      if (interaction.data.type === ApplicationCommandType.Message) {
+        const c = new ContextMenuCommandContext(obj[interaction.data.name])
+        return obj[interaction.data.name](c)
       }
     }
 

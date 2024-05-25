@@ -68,10 +68,6 @@ export const commandOptionsSchema = z // 1
     })
   )
   .max(25)
-  // .refine(
-  //   commandOptionSchemaRefine,
-  //   'Sub-command and sub-command group option types are mutually exclusive to all other types'
-  // )
 
 export const commandSchema = z
   .object({
@@ -94,5 +90,5 @@ export const userCommandSchema = commandSchema.omit({
 export const messageCommandSchema = userCommandSchema
 
 export const commandsScheme = z.array(commandSchema).max(100)
-export const userCommandsSchema = z.array(messageCommandSchema).max(5)
+export const userCommandsSchema = z.array(userCommandSchema).max(5)
 export const messageCommandsSchema = z.array(messageCommandSchema).max(5)

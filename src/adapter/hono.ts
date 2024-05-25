@@ -21,6 +21,7 @@ import {createFactory, createMiddleware} from 'hono/factory'
 import type {Handler} from '../builder0.ts'
 import {createHandler} from '../interaction.ts'
 import {verifyRequestSignature as verifyRequest} from '../lib/ed25519.ts'
+import { Command } from "../types.ts";
 
 export {importKeyRaw} from '../lib/ed25519.ts'
 
@@ -52,7 +53,7 @@ export const verifyRequestSignature = (key: CryptoKey) => {
  * app.post('/interaction', ...discordInteraction(key, []))
  * ```
  */
-export const discordInteraction = (key: CryptoKey, commands: Handler<any>[]) => {
+export const discordInteraction = (key: CryptoKey, commands: Command[]) => {
   const handler = createHandler(commands)
 
   const interactionHandler = createMiddleware(async (c) => {

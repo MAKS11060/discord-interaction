@@ -63,13 +63,22 @@ const test3 = defineCommand({
   },
 })
 
-// const test4 = defineCommand({
-//   type: ApplicationCommandType.User,
-//   name: 'test4',
-//   description: 'd'
+const test4 = defineCommand({
+  type: ApplicationCommandType.User,
+  name: 'test4',
+}).createHandler({
+  test4: (c) => {
+    return c.reply({content: '1'})
+  },
+})
 
-// }).createHandler({
+const test5 = defineCommand({
+  type: ApplicationCommandType.Message,
+  name: 'test5',
+}).createHandler({
+  test5: (c) => {
+    return c.reply({content: '2'})
+  },
+})
 
-// })
-
-export const commands = [test1, test2, test3]
+export const commands = [test1, test2, test3, test4, test5]

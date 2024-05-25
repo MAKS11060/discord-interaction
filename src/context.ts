@@ -9,10 +9,47 @@ import {
   APIInteractionResponseDeferredChannelMessageWithSource,
   APIModalInteractionResponseCallbackData,
   APIModalInteractionResponse,
+  APIApplicationCommandOption,
+  RESTPostAPIChatInputApplicationCommandsJSONBody,
+  ApplicationCommandOptionType,
+  RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from 'discord-api-types/v10'
+import type {isType} from './types.ts'
 
-export class ApplicationCommandContext {
-  /** send a message in response */
+export class ApplicationCommandContext<
+  C extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandOption,
+  T extends APIApplicationCommandOption
+> {
+  command: C = {} as any
+  options: T[]
+  constructor(command: C, options?: T[]) {
+    this.command = command
+    this.options = options || []
+  }
+
+  // ===========
+  getOption<K extends T['name']>(name: K): T extends {name: K} ? T : never {
+    return this.options.find((option) => option.name === name) as any
+  }
+
+  getString<K extends isType<T, ApplicationCommandOptionType.String>['name']>(
+    name: K
+  ): T extends {name: K} ? T : never {
+    return this.options.find(
+      (option) => option.type === ApplicationCommandOptionType.String && option.name === name
+    ) as any
+  }
+
+  getInteger<K extends isType<T, ApplicationCommandOptionType.Integer>['name']>(
+    name: K
+  ): T extends {name: K} ? T : never {
+    return this.options.find(
+      (option) => option.type === ApplicationCommandOptionType.Integer && option.name === name
+    ) as any
+  }
+  // ===========
+
+  /** Send a new message in response */
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -20,6 +57,7 @@ export class ApplicationCommandContext {
     }
   }
 
+  /** Replaces the current message */
   replyUpdate(data: APIInteractionResponseCallbackData): APIInteractionResponseUpdateMessage {
     return {
       type: InteractionResponseType.UpdateMessage,
@@ -45,6 +83,7 @@ export class ApplicationCommandContext {
     }
   }
 
+  /** Create modal */
   modal(data: APIModalInteractionResponseCallbackData): APIModalInteractionResponse {
     return {
       type: InteractionResponseType.Modal,
@@ -80,6 +119,21 @@ export class ModalContext {
   ): APIInteractionResponseDeferredChannelMessageWithSource {
     return {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
+      data,
+    }
+  }
+}
+
+export class ContextMenuCommandContext<C extends RESTPostAPIContextMenuApplicationCommandsJSONBody> {
+  command: C = {} as any
+  constructor(command: C) {
+    this.command = command
+  }
+
+  /** Send a new message in response */
+  reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
       data,
     }
   }

@@ -23,144 +23,67 @@
 //   RESTPostAPIChatInputApplicationCommandsJSONBody
 // } from 'discord-api-types/v10'
 
+import {
+  APIInteractionResponse,
+  RESTPostAPIChatInputApplicationCommandsJSONBody,
+  APIApplicationCommandOption,
+  APIApplicationCommandBasicOption,
+  APIApplicationCommandSubcommandOption,
+  APIApplicationCommandSubcommandGroupOption,
+  ApplicationCommandOptionType,
+  RESTPostAPIContextMenuApplicationCommandsJSONBody,
+} from 'discord-api-types/v10'
+import {ApplicationCommandContext, ContextMenuCommandContext} from './context.ts'
 
 /** {} | {} => {} & {} */
-export type UnionToIntersection<U> = (U extends any ? (arg: U) => void : never) extends (arg: infer R) => void ? R : never
+export type UnionToIntersection<U> = (U extends any ? (arg: U) => void : never) extends (arg: infer R) => void
+  ? R
+  : never
 
 /** unknown[] => {} | {} */
 export type Unpack<T extends unknown[] | undefined> = T extends Array<infer O> ? O : never
 
 export type EmptyArray<T> = T extends [] ? never : T
 
+export type Handler<T> = (c: T) => APIInteractionResponse | Promise<APIInteractionResponse>
 
+export type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+  T['options'] extends APIApplicationCommandOption[] & EmptyArray<T['options']>
+    ? T['options'] extends Array<infer O> // 0
+      ? O extends APIApplicationCommandBasicOption
+        ? {[K in T['name']]: Handler<ApplicationCommandContext<T, Unpack<T['options']>>>} // 0(1)
+        : O extends APIApplicationCommandSubcommandOption
+        ? {
+            [K in T['name']]: {
+              [N in O['name']]: Handler<ApplicationCommandContext<O, Unpack<O['options']>>> // 1(2)
+            }
+          }
+        : O extends APIApplicationCommandSubcommandGroupOption
+        ? {
+            [K in T['name']]: {
+              [N in O['name']]: O['options'] extends Array<infer S>
+                ? S extends APIApplicationCommandSubcommandOption
+                  ? {[K in S['name']]: Handler<ApplicationCommandContext<S, Unpack<S['options']>>>} // 2(3)
+                  : 2
+                : 3
+            }
+          }
+        : 1
+      : {[K in T['name']]: Handler<ApplicationCommandContext<T, never>>}
+    : {[K in T['name']]: Handler<ApplicationCommandContext<T, never>>}
 
-// export type ExtractOption<T extends APIApplicationCommandOption[] | undefined> = T extends unknown[] ? T[number] : T
+export type ContextMenuCommandScheme<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> = {
+  [K in T['name']]: Handler<ContextMenuCommandContext<T>>
+}
 
-// type ParseOption<T extends APIApplicationCommandOption | undefined> = T extends APIApplicationCommandSubcommandOption
-//   ? T extends {required: true}
-//     ? {
-//         [K in T['name']]: APIApplicationCommandInteractionDataSubcommandOption &
-//           UnionToIntersection<ParseOption<ExtractOption<T['options']>>>
-//       }
-//     : {
-//         [K in T['name']]?: APIApplicationCommandInteractionDataSubcommandOption &
-//           UnionToIntersection<ParseOption<ExtractOption<T['options']>>>
-//       }
-//   : T extends APIApplicationCommandSubcommandGroupOption
-//   ? T extends {required: true}
-//     ? {
-//         [K in T['name']]: APIApplicationCommandInteractionDataSubcommandGroupOption &
-//           UnionToIntersection<ParseOption<ExtractOption<T['options']>>>
-//       }
-//     : {
-//         [K in T['name']]?: APIApplicationCommandInteractionDataSubcommandGroupOption &
-//           UnionToIntersection<ParseOption<ExtractOption<T['options']>>>
-//       }
-//   : T extends APIApplicationCommandStringOption
-//   ? T extends {required: true}
-//     ? {[K in T['name']]: APIApplicationCommandInteractionDataStringOption}
-//     : {[K in T['name']]?: APIApplicationCommandInteractionDataStringOption}
-//   : T extends APIApplicationCommandIntegerOption
-//   ? T extends {required: true}
-//     ? {[K in T['name']]: APIApplicationCommandInteractionDataIntegerOption}
-//     : {[K in T['name']]?: APIApplicationCommandInteractionDataIntegerOption}
-//   : T extends APIApplicationCommandBooleanOption
-//   ? T extends {required: true}
-//     ? {[K in T['name']]: APIApplicationCommandInteractionDataBooleanOption}
-//     : {[K in T['name']]?: APIApplicationCommandInteractionDataBooleanOption}
-//   : T extends APIApplicationCommandUserOption
-//   ? T extends {required: true}
-//     ? {[K in T['name']]: APIApplicationCommandInteractionDataUserOption}
-//     : {[K in T['name']]?: APIApplicationCommandInteractionDataUserOption}
-//   : T extends APIApplicationCommandChannelOption
-//   ? T extends {required: true}
-//     ? {[K in T['name']]: APIApplicationCommandInteractionDataChannelOption}
-//     : {[K in T['name']]?: APIApplicationCommandInteractionDataChannelOption}
-//   : T extends APIApplicationCommandRoleOption
-//   ? T extends {required: true}
-//     ? {[K in T['name']]: APIApplicationCommandInteractionDataRoleOption}
-//     : {[K in T['name']]?: APIApplicationCommandInteractionDataRoleOption}
-//   : T extends APIApplicationCommandMentionableOption
-//   ? T extends {required: true}
-//     ? {[K in T['name']]: APIApplicationCommandInteractionDataMentionableOption}
-//     : {[K in T['name']]?: APIApplicationCommandInteractionDataMentionableOption}
-//   : T extends APIApplicationCommandAttachmentOption
-//   ? T extends {required: true}
-//     ? {[K in T['name']]: APIApplicationCommandInteractionDataAttachmentOption}
-//     : {[K in T['name']]?: APIApplicationCommandInteractionDataAttachmentOption}
-//   : never
+export type Command = {
+  command: CommandScheme<any> | ContextMenuCommandScheme<any>
+  handler: Handler<any>
+}
 
-// type Scheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['options'] extends Array<infer O>
-//   ? O extends APIApplicationCommandOption
-//     ? ParseOption<O>
-//     : never
-//   : never
-
-// export type CommandToScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = UnionToIntersection<Scheme<T>>
-
-// ==================================================================
-// type A = CommandToScheme<typeof test>
-// type B = A['post']
-
-// const test = defineCommand({
-//   name: 'art',
-//   description: 'Get anime art',
-//   options: [
-//     {
-//       type: ApplicationCommandOptionType.Subcommand,
-//       name: 'random',
-//       description: 'Get random art',
-//     },
-//     {
-//       type: ApplicationCommandOptionType.Subcommand,
-//       name: 'fav',
-//       description: 'User random favorites',
-//       options: [
-//         {
-//           type: ApplicationCommandOptionType.String,
-//           name: 'user',
-//           description: 'username',
-//           required: true,
-//           max_length: 80,
-//           autocomplete: true,
-//         },
-//       ],
-//     },
-//     {
-//       type: ApplicationCommandOptionType.Subcommand,
-//       name: 'post',
-//       description: 'Post by id',
-//       options: [
-//         {
-//           type: ApplicationCommandOptionType.Number,
-//           name: 'id',
-//           description: 'Post id',
-//           required: true,
-//         },
-//       ],
-//     },
-//   ],
-// }).command
-
-// ==================================================================
-// const app = defineCommand({
-//   name: 'app',
-//   description: ''
-// }).command
-
-// type T = CommandToScheme2<typeof app>
-
-// type ParseOption2<T extends APIApplicationCommandOption> = T
-
-// type Scheme2<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = T['options'] extends Array<infer O>
-//   ? O extends APIApplicationCommandOption
-//     ? ParseOption2<O>
-//     : never
-//   : never
-// export type CommandToScheme2<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> = UnionToIntersection<Scheme2<T>>
-
-// type Obj = {
-//   name: 'str',
-
-// }
-
+/** Type guard for `APIApplicationCommandOption` */
+export type isType<T extends APIApplicationCommandOption, Type extends ApplicationCommandOptionType> = T extends T & {
+  type: Type
+}
+  ? T
+  : never

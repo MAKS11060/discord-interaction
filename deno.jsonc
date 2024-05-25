@@ -5,7 +5,9 @@
   "tasks": {
     "dev": "deno run -A --unstable-hmr main.ts",
     "devr": "deno run -Ar --unstable-hmr main.ts",
-    "test": "deno test -A"
+    "ci": "deno task publish-dry-run && deno task test",
+    "test": "deno test -A",
+    "publish-dry-run": "deno publish --dry-run"
   },
   "imports": {
     "@std/bytes": "jsr:@std/bytes@^0.224.0",
