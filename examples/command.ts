@@ -5,8 +5,12 @@ const test1 = defineCommand({
   name: 'test1',
   description: 'test1',
 }).createHandler({
-  test1: (c) => {
-    return c.reply({content: 'ok'})
+  test1: () => {
+    return {
+      command: (c) => {
+        return c.reply({content: ''})
+      },
+    }
   },
 })
 
@@ -19,11 +23,19 @@ const test2 = defineCommand({
   ],
 }).createHandler({
   test2: {
-    sub1: (c) => {
-      return c.reply({content: 'test2 sub1'})
+    sub1: () => {
+      return {
+        command: (c) => {
+          return c.reply({content: 'test2 sub1'})
+        },
+      }
     },
-    sub2: (c) => {
-      return c.reply({content: 'test2 sub2'})
+    sub2: () => {
+      return {
+        command: (c) => {
+          return c.reply({content: 'test2 sub2'})
+        },
+      }
     },
   },
 })
@@ -47,38 +59,121 @@ const test3 = defineCommand({
 }).createHandler({
   test3: {
     'sub-g1': {
-      sub1: (c) => {
-        return c.reply({content: 'test3 sub-g1 sub1'})
-      },
-      sub2: (c) => {
-        return c.reply({content: 'test3 sub-g1 sub2'})
-      },
+      sub1: (c) => ({
+        command: (c) => c.reply({content: 'test3 sub-g1 sub1'}),
+      }),
+      sub2: (c) => ({
+        command: (c) => c.reply({content: 'test3 sub-g1 sub2'}),
+      }),
     },
-    sub1: (c) => {
-      return c.reply({content: 'test3 sub1'})
-    },
-    sub2: (c) => {
-      return c.reply({content: 'test3 sub2'})
-    },
+    sub1: (c) => ({
+      command: (c) => c.reply({content: 'test3 sub1'}),
+    }),
+    sub2: () => ({
+      command: (c) => c.reply({content: 'test3 sub2'}),
+    }),
   },
 })
 
-const test4 = defineCommand({
+/* const test4 = defineCommand({
   type: ApplicationCommandType.User,
   name: 'test4',
 }).createHandler({
-  test4: (c) => {
-    return c.reply({content: '1'})
-  },
+  test4: (c) => c.reply({content: '1'}),
 })
 
 const test5 = defineCommand({
   type: ApplicationCommandType.Message,
   name: 'test5',
 }).createHandler({
-  test5: (c) => {
-    return c.reply({content: '2'})
-  },
+  test5: (c) => c.reply({content: '2'}),
+}) */
+
+defineCommand({
+  name: 'autocomplete',
+  description: 'autocomplete',
+  options: [
+    {
+      type: ApplicationCommandOptionType.String,
+      name: 'str',
+      description: 'str',
+      // autocomplete: true // dynamic autocomplete handler
+    },
+    {
+      type: ApplicationCommandOptionType.String,
+      name: 'str2',
+      description: 'str2',
+      autocomplete: true, // dynamic autocomplete handler
+    },
+  ],
+}).createHandler({
+  autocomplete: () => ({
+    command: (c) => {
+      return c.reply({content: '1'})
+    },
+    autocomplete: (c) => {
+      return c.autocomplete({choices: []})
+    },
+  }),
 })
 
-export const commands = [test1, test2, test3, test4, test5]
+const all = defineCommand({
+  name: 'all',
+  description: 'All',
+  options: [
+    {
+      type: ApplicationCommandOptionType.String,
+      name: 'str',
+      description: 'Str',
+    },
+    {
+      type: ApplicationCommandOptionType.Integer,
+      name: 'int',
+      description: 'Int',
+    },
+    {
+      type: ApplicationCommandOptionType.Boolean,
+      name: 'bool',
+      description: 'Bool',
+    },
+    {
+      type: ApplicationCommandOptionType.User,
+      name: 'user',
+      description: 'User',
+    },
+    {
+      type: ApplicationCommandOptionType.Channel,
+      name: 'channel',
+      description: 'Channel',
+    },
+    {
+      type: ApplicationCommandOptionType.Role,
+      name: 'role',
+      description: 'Role',
+    },
+    {
+      type: ApplicationCommandOptionType.Mentionable,
+      name: 'mentionable',
+      description: 'Mentionable',
+    },
+    {
+      type: ApplicationCommandOptionType.Number,
+      name: 'number',
+      description: 'Number',
+    },
+    {
+      type: ApplicationCommandOptionType.Attachment,
+      name: 'attachment',
+      description: 'Attachment',
+    },
+  ],
+}).createHandler({
+  all: (command) => ({
+    command: (c) => {
+      console.log(c)
+      return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
+    },
+  }),
+})
+
+export const commands = [test1, test2, test3, /* test4, test5, */ all]

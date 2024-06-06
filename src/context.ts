@@ -1,3 +1,7 @@
+/**
+ * @todo refactoring for less code duplication
+ */
+
 import {
   APIInteractionResponseCallbackData,
   APIInteractionResponseChannelMessageWithSource,
@@ -13,39 +17,76 @@ import {
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   ApplicationCommandOptionType,
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
+  RESTPostAPIInteractionCallbackJSONBody,
+  RESTPostAPIWebhookWithTokenResult,
+  APIApplicationCommandInteractionDataOption,
+  APIApplicationCommandInteractionDataBasicOption,
 } from 'discord-api-types/v10'
-import type {isType} from './types.ts'
+import type {OptionToObject} from './types.ts'
+
+// type F = APIApplicationCommandInteractionDataOption
+// type F = APIApplicationCommandInteractionDataBasicOption
+
+/** Type guard for `APIApplicationCommandOption` */
+export type isType<T extends APIApplicationCommandOption, Type extends ApplicationCommandOptionType> = T extends T & {
+  type: Type
+}
+  ? T
+  : never
 
 export class ApplicationCommandContext<
   C extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandOption,
   T extends APIApplicationCommandOption
 > {
   command: C = {} as any
-  options: T[]
+  /*   options: T[]
   constructor(command: C, options?: T[]) {
     this.command = command
     this.options = options || []
+  } */
+
+  /** Access to the original options */
+  options: OptionToObject<T>
+  constructor(command: C, options: OptionToObject<T>) {
+    this.command = command
+    this.options = options || {}
   }
 
   // ===========
-  getOption<K extends T['name']>(name: K): T extends {name: K} ? T : never {
-    return this.options.find((option) => option.name === name) as any
+  // getOption<K extends T['name']>(name: K): T extends {name: K} ? T : never {
+  //   return this.options.find((option) => option.name === name) as any
+  // }
+  //
+  // getString<K extends isType<T, ApplicationCommandOptionType.String>['name']>(
+  //   name: K
+  // ): T extends {name: K} ? T : never {
+  //   return this.options.find(
+  //     (option) => option.type === ApplicationCommandOptionType.String && option.name === name
+  //   ) as any
+  // }
+  //
+  // getInteger<K extends isType<T, ApplicationCommandOptionType.Integer>['name']>(
+  //   name: K
+  // ): T extends {name: K} ? T : never {
+  //   return this.options.find(
+  //     (option) => option.type === ApplicationCommandOptionType.Integer && option.name === name
+  //   ) as any
+  // }
+
+  getOption<K extends keyof typeof this.options>(name: K): (typeof this.options)[K] {
+    return this.options[name]
   }
 
   getString<K extends isType<T, ApplicationCommandOptionType.String>['name']>(
     name: K
   ): T extends {name: K} ? T : never {
-    return this.options.find(
-      (option) => option.type === ApplicationCommandOptionType.String && option.name === name
-    ) as any
+    return this.options[name]
   }
 
   getInteger<K extends isType<T, ApplicationCommandOptionType.Integer>['name']>(
     name: K
   ): T extends {name: K} ? T : never {
-    return this.options.find(
-      (option) => option.type === ApplicationCommandOptionType.Integer && option.name === name
-    ) as any
+    return this.options[name]
   }
   // ===========
 
@@ -92,7 +133,12 @@ export class ApplicationCommandContext<
   }
 }
 
-export class ApplicationCommandAutocompleteContext {
+// TODO
+export class ApplicationCommandAutocompleteContext<T extends APIApplicationCommandOption> {
+  constructor() {}
+
+  getOption() {}
+
   autocomplete(data: APICommandAutocompleteInteractionResponseCallbackData): APIApplicationCommandAutocompleteResponse {
     return {
       type: InteractionResponseType.ApplicationCommandAutocompleteResult,
@@ -101,10 +147,12 @@ export class ApplicationCommandAutocompleteContext {
   }
 }
 
+// TODO
 export class MessageComponentContext {
   /* TODO */
 }
 
+// TODO
 export class ModalContext {
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
     return {
@@ -139,13 +187,31 @@ export class ContextMenuCommandContext<C extends RESTPostAPIContextMenuApplicati
   }
 }
 
-/* TODO: use functions
-const reply = (data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource => {
-  return {
-    type: InteractionResponseType.ChannelMessageWithSource,
-    data,
-  }
-}
+// TODO
+const createDeferredResponse = () => {
+  /*
+    TODO: https://discord.com/developers/docs/interactions/receiving-and-responding#create-interaction-response
+    `https://discord.com/api/v10/interactions/{interaction.id}/{interaction.token}/callback`
+    `https://discord.com/api/v10/interactions/{interaction.id}/{interaction.token}/messages/@original`
+    `https://discord.com/api/v10/webhooks/{application.id}/{interaction.token}`
+  */
 
-const createApplicationCommandContext = () => {}
- */
+  const send = async () => {
+    const body = {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {},
+    } satisfies RESTPostAPIInteractionCallbackJSONBody
+
+    const res = await fetch(`https://discord.com/api/v10/interactions/{interaction.id}/{interaction.token}/callback`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+
+    return res.ok ? ((await res.json()) as RESTPostAPIWebhookWithTokenResult) : await res.json()
+  }
+
+  const edit = () => {}
+  const cancel = () => {}
+
+  return {send, edit, cancel}
+}

@@ -18,10 +18,9 @@
 
 import type {APIInteraction} from 'discord-api-types/v10'
 import {createFactory, createMiddleware} from 'hono/factory'
-import type {Handler} from '../builder0.ts'
 import {createHandler} from '../interaction.ts'
 import {verifyRequestSignature as verifyRequest} from '../lib/ed25519.ts'
-import { Command } from "../types.ts";
+import {Command} from '../types.ts'
 
 export {importKeyRaw} from '../lib/ed25519.ts'
 
