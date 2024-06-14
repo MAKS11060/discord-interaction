@@ -31,8 +31,16 @@ import {
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from 'npm:discord-api-types/v10'
 import {commandSchema, userCommandSchema} from './schema.ts'
-import {CommandScheme, ContextMenuCommandScheme, EmptyArray, Handler, OptionToObject, UnionToIntersection, Unpack} from './types.ts'
-import { associateBy } from "jsr:@std/collections@^0.224.0/associate-by";
+import {
+  CommandSchema,
+  ContextMenuCommandSchema,
+  EmptyArray,
+  Handler,
+  OptionToObject,
+  UnionToIntersection,
+  Unpack,
+} from './types.ts'
+import {associateBy} from 'jsr:@std/collections@^0.224.0/associate-by'
 
 // const toArr = <const T extends APIApplicationCommandOption[]>(input: T) => input
 // const op = toArr([
@@ -43,7 +51,7 @@ import { associateBy } from "jsr:@std/collections@^0.224.0/associate-by";
 
 // console.log(o.int.name)
 
-const validateCommand = <T extends RESTPostAPIApplicationCommandsJSONBody>(command: T): T => {
+/* const validateCommand = <T extends RESTPostAPIApplicationCommandsJSONBody>(command: T): T => {
   if (command.type === undefined || command.type === ApplicationCommandType.ChatInput) {
     return commandSchema.passthrough().parse(command) as unknown as T
   } else if (command.type === ApplicationCommandType.Message || command.type === ApplicationCommandType.User) {
@@ -69,3 +77,4 @@ export type DefineHandler<T extends RESTPostAPIApplicationCommandsJSONBody> =
     : T extends RESTPostAPIContextMenuApplicationCommandsJSONBody
     ? ContextMenuCommandScheme<T>
     : never
+ */

@@ -14,8 +14,10 @@ const app = new Hono().post(
     incoming: ({type, data, member, channel, ...int}) => {
       console.log('channel', channel?.id, channel?.name, '| member', member?.user.id, member?.user.global_name)
       console.log(InteractionType[type], data)
-      // console.log(int)
     },
+    // incoming: (int) => {
+    //   console.log(JSON.stringify(int))
+    // },
     outgoing: (data) => {
       console.log('outgoing ///////////////////////////////////////////')
       console.log(data)
@@ -31,7 +33,3 @@ if (Deno.env.has('KEY') && Deno.env.has('CERT')) {
 } else {
   Deno.serve({port: 80}, app.fetch)
 }
-
-app.get('/', (c) => {
-  return c.text('12')
-})

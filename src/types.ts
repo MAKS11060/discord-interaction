@@ -7,6 +7,7 @@ import {
   APIApplicationCommandSubcommandGroupOption,
   ApplicationCommandOptionType,
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
+  RESTPostAPIApplicationCommandsJSONBody,
 } from 'discord-api-types/v10'
 import {
   ApplicationCommandAutocompleteContext,
@@ -29,6 +30,20 @@ export type Unpack<T extends unknown[] | undefined> = T extends Array<infer O> ?
 
 export type EmptyArray<T> = T extends [] ? never : T
 
+type Autocomplete<T extends APIApplicationCommandOption> = T extends {autocomplete: true}
+  ? {
+      autocomplete(
+        c: ApplicationCommandAutocompleteContext<T>
+      ): APIInteractionResponse | Promise<APIInteractionResponse>
+    }
+  : never
+
+type isRequiredOption<T extends APIApplicationCommandBasicOption> = T extends {required: true} ? T : T | null
+
+export type OptionToObject<T extends APIApplicationCommandOption> = {
+  [K in T['name']]: T extends {name: K} ? T : never
+}
+
 export type CommandHandler<
   T extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandSubcommandOption,
   O extends APIApplicationCommandOption | never
@@ -48,22 +63,7 @@ export type CommandHandler<
     }
   | Autocomplete<O>
 
-type Autocomplete<T extends APIApplicationCommandOption> = T extends {autocomplete: true}
-  ? {
-      autocomplete(
-        c: ApplicationCommandAutocompleteContext<T>
-      ): APIInteractionResponse | Promise<APIInteractionResponse>
-    }
-  : never
-
-// type B = Autocomplete<{
-//   type: ApplicationCommandOptionType.String
-//   name: string
-//   description: ''
-//   autocomplete: true
-// }>
-
-export type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
+export type CommandSchema<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
   T['options'] extends APIApplicationCommandOption[] & EmptyArray<T['options']>
     ? T['options'] extends Array<infer O> // 0
       ? O extends APIApplicationCommandBasicOption
@@ -84,52 +84,30 @@ export type CommandScheme<T extends RESTPostAPIChatInputApplicationCommandsJSONB
                 : 3
             }
           }
-        : 1
+        : never
       : {[K in T['name']]: CommandHandler<T, never>}
     : {[K in T['name']]: CommandHandler<T, never>}
 
-export type HandlerFn<T> = (c: T) => APIInteractionResponse | Promise<APIInteractionResponse>
-export type Handler<T> = (schema: unknown) => Record<string, HandlerFn<T>>
-
-export type ContextMenuCommandScheme<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> = {
-  [K in T['name']]: Handler<ContextMenuCommandContext<T>>
+export type ContextMenuHandler<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> = (command: T) => {
+  command(c: ContextMenuCommandContext<T>): APIInteractionResponse | Promise<APIInteractionResponse>
 }
 
-export type InitHandler = Record<
-  string,
-  Handler<unknown> | Record<string, Handler<unknown> | Record<string, Handler<unknown>>>
-  // Record<string, Record<string, Handler<unknown>> | Handler<unknown>> | Handler<unknown>
->
+export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> = {
+  [K in T['name']]: ContextMenuHandler<T>
+}
 
-// export type InitHandler = {
-//   [K: string]:
-//     | Handler<unknown>
-//     | {
-//         [K: string]:
-//           | Handler<unknown>
-//           | {
-//               [K: string]: Handler<unknown>
-//             }
-//       }
-// }
+export type Handler = CommandHandler<any, never> | ContextMenuHandler<any>
+
+type HandlerRecord = Record<string, Handler | Record<string, Handler | Record<string, Handler>>>
 
 export type Command = {
-  command: CommandScheme<any> | ContextMenuCommandScheme<any>
-  handler: InitHandler //Handler<any>
+  command: CommandSchema<any> | ContextMenuCommandSchema<any> | any // FIX: remove any
+  handler: HandlerRecord
 }
 
-type isRequired<T extends APIApplicationCommandBasicOption> = T extends APIApplicationCommandBasicOption & {
-  required: true
-}
-  ? T
-  : never
-
-/**
- * ```ts
- * [{type: ApplicationCommandOptionType.String, name: 'str', description: '1'}] // =>
- * {str: {type: ApplicationCommandOptionType.String, name: 'str', description: '1'}}
- * ```
- */
-export type OptionToObject<T extends APIApplicationCommandOption> = {
-  [K in T['name']]: T extends {name: K} ? T : never
-}
+export type DefineHandler<T extends RESTPostAPIApplicationCommandsJSONBody> =
+  T extends RESTPostAPIChatInputApplicationCommandsJSONBody
+    ? CommandSchema<T>
+    : T extends RESTPostAPIContextMenuApplicationCommandsJSONBody
+    ? ContextMenuCommandSchema<T>
+    : never

@@ -1,7 +1,3 @@
-/**
- * @todo refactoring for less code duplication
- */
-
 import {
   APIInteractionResponseCallbackData,
   APIInteractionResponseChannelMessageWithSource,
@@ -21,6 +17,12 @@ import {
   RESTPostAPIWebhookWithTokenResult,
   APIApplicationCommandInteractionDataOption,
   APIApplicationCommandInteractionDataBasicOption,
+  APIApplicationCommandInteractionDataNumberOption,
+  APIInteraction,
+  ApplicationIntegrationType,
+  InteractionType,
+  ApplicationCommandType,
+  APIInteractionDataResolvedGuildMember,
 } from 'discord-api-types/v10'
 import type {OptionToObject} from './types.ts'
 
@@ -28,7 +30,7 @@ import type {OptionToObject} from './types.ts'
 // type F = APIApplicationCommandInteractionDataBasicOption
 
 /** Type guard for `APIApplicationCommandOption` */
-export type isType<T extends APIApplicationCommandOption, Type extends ApplicationCommandOptionType> = T extends T & {
+export type PickType<T extends APIApplicationCommandOption, Type extends ApplicationCommandOptionType> = T extends T & {
   type: Type
 }
   ? T
@@ -39,56 +41,54 @@ export class ApplicationCommandContext<
   T extends APIApplicationCommandOption
 > {
   command: C = {} as any
-  /*   options: T[]
-  constructor(command: C, options?: T[]) {
-    this.command = command
-    this.options = options || []
-  } */
-
   /** Access to the original options */
   options: OptionToObject<T>
-  constructor(command: C, options: OptionToObject<T>) {
+  constructor(readonly interaction: APIInteraction, command: C, options: OptionToObject<T>) {
     this.command = command
     this.options = options || {}
   }
-
-  // ===========
-  // getOption<K extends T['name']>(name: K): T extends {name: K} ? T : never {
-  //   return this.options.find((option) => option.name === name) as any
-  // }
-  //
-  // getString<K extends isType<T, ApplicationCommandOptionType.String>['name']>(
-  //   name: K
-  // ): T extends {name: K} ? T : never {
-  //   return this.options.find(
-  //     (option) => option.type === ApplicationCommandOptionType.String && option.name === name
-  //   ) as any
-  // }
-  //
-  // getInteger<K extends isType<T, ApplicationCommandOptionType.Integer>['name']>(
-  //   name: K
-  // ): T extends {name: K} ? T : never {
-  //   return this.options.find(
-  //     (option) => option.type === ApplicationCommandOptionType.Integer && option.name === name
-  //   ) as any
-  // }
 
   getOption<K extends keyof typeof this.options>(name: K): (typeof this.options)[K] {
     return this.options[name]
   }
 
-  getString<K extends isType<T, ApplicationCommandOptionType.String>['name']>(
+  getString<K extends PickType<T, ApplicationCommandOptionType.String>['name']>(
     name: K
   ): T extends {name: K} ? T : never {
     return this.options[name]
   }
 
-  getInteger<K extends isType<T, ApplicationCommandOptionType.Integer>['name']>(
+  getInteger<K extends PickType<T, ApplicationCommandOptionType.Integer>['name']>(
     name: K
   ): T extends {name: K} ? T : never {
     return this.options[name]
   }
-  // ===========
+
+  getBoolean<K extends PickType<T, ApplicationCommandOptionType.Boolean>['name']>(name: K) {}
+  getUser<K extends PickType<T, ApplicationCommandOptionType.User>['name']>(
+    name: K
+  ): APIInteractionDataResolvedGuildMember | undefined {
+    const interaction = this.interaction
+    if (
+      interaction.type === InteractionType.ApplicationCommand &&
+      interaction.data.type === ApplicationCommandType.ChatInput
+    ) {
+      for (const option of interaction.data.options ?? []) {
+        if (option.type === ApplicationCommandOptionType.User) {
+          if (option.name === name) {
+            return interaction.data.resolved?.members?.[option.value]
+          }
+        }
+      }
+    }
+  }
+  getChannel<K extends PickType<T, ApplicationCommandOptionType.Channel>['name']>(name: K) {}
+  getRole<K extends PickType<T, ApplicationCommandOptionType.Role>['name']>(name: K) {}
+  getMentionable<K extends PickType<T, ApplicationCommandOptionType.Mentionable>['name']>(name: K) {}
+  getNumber<K extends PickType<T, ApplicationCommandOptionType.Number>['name']>(name: K) {
+    return {} as APIApplicationCommandInteractionDataNumberOption
+  }
+  getAttachment<K extends PickType<T, ApplicationCommandOptionType.Attachment>['name']>(name: K) {}
 
   /** Send a new message in response */
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {

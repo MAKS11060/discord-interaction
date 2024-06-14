@@ -168,12 +168,81 @@ const all = defineCommand({
     },
   ],
 }).createHandler({
+  // all: (command) => ({
+  //   command: (c) => {
+  //     console.log(c.getNumber('number').value)
+
+  //     return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
+  //   },
+  // }),
+
+})
+
+const all2 = defineCommand({
+  name: 'all2',
+  description: 'All2',
+  options: [
+    {
+      type: ApplicationCommandOptionType.Subcommand,
+      name: 'sub',
+      description: 'Sub',
+      options: [
+        {
+          type: ApplicationCommandOptionType.String,
+          name: 'str',
+          description: 'Str',
+        },
+        {
+          type: ApplicationCommandOptionType.Integer,
+          name: 'int',
+          description: 'Int',
+        },
+        {
+          type: ApplicationCommandOptionType.Boolean,
+          name: 'bool',
+          description: 'Bool',
+        },
+        {
+          type: ApplicationCommandOptionType.User,
+          name: 'user',
+          description: 'User',
+        },
+        {
+          type: ApplicationCommandOptionType.Channel,
+          name: 'channel',
+          description: 'Channel',
+        },
+        {
+          type: ApplicationCommandOptionType.Role,
+          name: 'role',
+          description: 'Role',
+        },
+        {
+          type: ApplicationCommandOptionType.Mentionable,
+          name: 'mentionable',
+          description: 'Mentionable',
+        },
+        {
+          type: ApplicationCommandOptionType.Number,
+          name: 'number',
+          description: 'Number',
+        },
+        {
+          type: ApplicationCommandOptionType.Attachment,
+          name: 'attachment',
+          description: 'Attachment',
+        },
+      ],
+    },
+  ],
+}).createHandler({
   all: (command) => ({
     command: (c) => {
-      console.log(c)
+      console.log(c.getNumber('number').value)
+
       return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
     },
   }),
 })
 
-export const commands = [test1, test2, test3, /* test4, test5, */ all]
+export const commands = [test1, test2, test3, /* test4, test5, */ all, all2]

@@ -3,6 +3,9 @@ import {decodeHex, encodeHex} from '@std/encoding/hex'
 
 const encoder = new TextEncoder()
 
+/**
+ * Import public key from string
+ */
 export const importKeyRaw = (publicKey: string): Promise<CryptoKey> => {
   return crypto.subtle.importKey('raw', decodeHex(publicKey), 'Ed25519', false, ['verify'])
 }

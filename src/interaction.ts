@@ -1,5 +1,6 @@
 import {
   APIApplicationCommandAutocompleteResponse,
+  APIApplicationCommandOption,
   APICommandAutocompleteInteractionResponseCallbackData,
   APIInteraction,
   APIInteractionResponse,
@@ -13,6 +14,9 @@ import {
   InteractionResponseType,
   InteractionType,
   MessageFlags,
+  RESTPostAPIApplicationCommandsJSONBody,
+  RESTPostAPIChatInputApplicationCommandsJSONBody,
+  RESTPostAPIContextMenuApplicationCommandsJSONBody,
   TextInputStyle,
 } from 'discord-api-types/v10'
 import {verifyRequestSignature} from './lib/ed25519.ts'
@@ -23,8 +27,9 @@ import {
   MessageComponentContext,
   ModalContext,
 } from './context.ts'
-import {associateBy, deepMerge} from '@std/collections'
-import {Command, Handler, HandlerFn, InitHandler} from './types.ts'
+import {associateBy} from '@std/collections'
+import {Command, CommandSchema, ContextMenuCommandSchema, DefineHandler, OptionToObject} from './types.ts'
+import {commandSchema, userCommandSchema} from './schema.ts'
 
 const unknownCommand = (): APIInteractionResponse => {
   return {
@@ -46,70 +51,81 @@ const errorCommand = (text: string): APIInteractionResponse => {
   }
 }
 
-const commandsInit = (init: Command[]): InitHandler => {
-  const handlers: InitHandler = {}
 
+export const commandToAct = (command: RESTPostAPIApplicationCommandsJSONBody) => {
+  const out: Record<string, any> = {}
 
-  for (const {command, handler} of init) {
-    // console.log(handler)
-    for (const key in handler) {
-      handlers[key] ??= {} // init obj
-      const l0 = handler[key] // level 0
+  out[command.name] ??= {} // def
+  if (command.options) {
+    out[command.name] = associateBy(command.options, (v) => v.name)
 
+    for (const key in out[command.name]) {
+      if (out[command.name][key].options) {
+        // out[command.name][key] ??= {}
+        out[command.name][key] = associateBy(
+          out[command.name][key].options as APIApplicationCommandOption[],
+          (v) => v.name
+        )
 
-      if (typeof l0 === 'object') {
-        for (const key2 in l0) {
-          const l1 = l0[key2] // level 1
-
-          if (typeof l1 === 'object') {
-            for (const key3 in l1) {
-              const l2 = l1[key3] // level 2
-              console.log(l2)
-              if (typeof l2 === 'function') {
-                // handlers[key][key2][key3] = l2
-              }
-            }
-          }
-          // console.log('obj', l1)
-
-          if (typeof l1 === 'function') {
-            // console.log(l1)
+        for (const key2 in out[command.name][key]) {
+          if (out[command.name][key][key2].options) {
+            // out[command.name][key][key2] ??= {}
+            out[command.name][key][key2] = associateBy(
+              out[command.name][key][key2].options as APIApplicationCommandOption[],
+              (v) => v.name
+            )
           }
         }
       }
+    }
+  }
+  // console.log(out)
+  return out
+}
+
+export const commandsInit = (init: Command[]) => {
+  const out: Record<string, any> = {}
+  // const commands: Record<string, any> = {}
+
+  for (const {command, handler} of init) {
+    const cAct = commandToAct(command) // to pretty obj
+    console.log(cAct)
+
+    for (const key in handler) {
+      const l0 = handler[key]
       if (typeof l0 === 'function') {
-
-        console.log(command)
-
-        handlers[key] = l0({}) as Handler<unknown>
-
-        // handlers[key] = l0({})
-        // console.log(l0)
+        // out[key] = l0(command)
+        out[key] = l0(cAct[key])
       }
-      // console.log('obj', l0)
+      if (typeof l0 === 'object') {
+        out[key] ??= {}
+        for (const key2 in l0) {
+          const l1 = l0[key2]
+          if (typeof l1 === 'function') {
+            // out[key][key2] = l1(command)
+            out[key][key2] = l1(cAct[key][key2])
+          }
+          if (typeof l1 === 'object') {
+            out[key][key2] ??= {}
+            for (const key3 in l1) {
+              const l2 = l1[key3]
+              if (typeof l2 === 'function') {
+                // out[key][key2][key3] = l2(command)
+                out[key][key2][key3] = l2(cAct[key][key2][key3])
+              }
+            }
+          }
+        }
+      }
     }
   }
 
-  // for (const key in init) {
-  // if (typeof init[key] === 'function') {
-  // handlers[key] = init[key].
-  // }
-  // }
-
-  return handlers
+  console.log(out)
+  return out
 }
 
 export const createHandler = (commands: Command[]) => {
-  /*   let obj: Record<string, any> = {}
-  for (const command of commands) {
-    obj = deepMerge(obj, command.handler)
-  }
-  for (const key in obj) {
-    // obj[key] = typeof obj[key] === "function" ? obj[key](command)
-  }
-  console.log(obj) */
-  // console.log(commands)
-  const obj = commandsInit(commands)
+  const obj = commandsInit(commands) as any
   console.log(obj)
 
   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
@@ -119,7 +135,11 @@ export const createHandler = (commands: Command[]) => {
 
     if (interaction.type === InteractionType.ApplicationCommand) {
       if (interaction.data.type === ApplicationCommandType.ChatInput) {
-        const c = new ApplicationCommandContext(obj[interaction.data.name], interaction.data.options)
+        const c = new ApplicationCommandContext(
+          interaction,
+          obj[interaction.data.name],
+          interaction.data.options as any
+        )
 
         if (!interaction.data.options) {
           return obj[interaction.data.name](c)
@@ -250,5 +270,26 @@ export const discordInteraction = (key: CryptoKey, commands: Command[]) => {
     if (invalid) return invalid
 
     return Response.json(await handler(await req.json()))
+  }
+}
+
+// ==========================================================================================
+const validateCommand = <T extends RESTPostAPIApplicationCommandsJSONBody>(command: T): T => {
+  if (command.type === undefined || command.type === ApplicationCommandType.ChatInput) {
+    return commandSchema.passthrough().parse(command) as unknown as T
+  } else if (command.type === ApplicationCommandType.Message || command.type === ApplicationCommandType.User) {
+    return userCommandSchema.passthrough().parse(command) as T
+  }
+  return commandSchema.passthrough().parse(command) as unknown as T
+}
+
+export const defineCommand = <const T extends RESTPostAPIApplicationCommandsJSONBody>(command: T) => {
+  command = validateCommand(command)
+
+  return {
+    command,
+    createHandler(handler: DefineHandler<T>) {
+      return {command, handler}
+    },
   }
 }

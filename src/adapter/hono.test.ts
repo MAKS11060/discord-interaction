@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno test -A --watch
-import {Hono} from 'npm:hono'
+import {Hono} from 'hono'
 import {discordInteraction} from './hono.ts'
 import {APIInteraction, InteractionType} from 'discord-api-types/v10'
 import {assertEquals} from 'jsr:@std/assert'
