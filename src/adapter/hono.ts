@@ -30,7 +30,7 @@ export {importKeyRaw} from '../lib/ed25519.ts'
  * - header `X-Signature-Timestamp`
  * - payload (`X-Signature-Timestamp` + `body`)
  */
-export const verifyRequestSignature = (key: CryptoKey) => {
+const verifyRequestSignature = (key: CryptoKey) => {
   return createMiddleware(async (c, next) => {
     const invalid = await verifyRequest(c.req.raw, key)
     if (invalid) return invalid
@@ -49,11 +49,11 @@ export const verifyRequestSignature = (key: CryptoKey) => {
  * const app = new Hono()
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
  *
- * app.post('/interaction', ...discordInteraction(key, []))
+ * app.post('/interaction', ...await discordInteraction(key, []))
  * ```
  */
-export const discordInteraction = (key: CryptoKey, commands: Command[]) => {
-  const handler = createHandler(commands)
+export const discordInteraction = async (key: CryptoKey, commands: Command[]) => {
+  const handler = await createHandler(commands)
 
   const interactionHandler = createMiddleware(async (c) => {
     const interaction = await c.req.json<APIInteraction>()

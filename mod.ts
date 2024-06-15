@@ -19,5 +19,4 @@
  */
 
 export {importKeyRaw, verifyRequestSignature} from './src/lib/ed25519.ts'
-export {discordInteraction} from './src/interaction.ts'
-export {defineCommand} from './src/builder0.ts'
+export {discordInteraction, defineCommand} from './src/interaction.ts'

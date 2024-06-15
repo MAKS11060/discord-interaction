@@ -23,7 +23,7 @@ const app = new Hono().post(
       console.log(data)
     },
   }),
-  ...discordInteraction(key, commands)
+  ...await discordInteraction(key, commands)
 )
 
 if (Deno.env.has('KEY') && Deno.env.has('CERT')) {

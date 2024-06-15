@@ -130,6 +130,7 @@ const test2 = defineCommand({
 }).createHandler({
   all2: {
     sub: (schema) => {
+      console.log({schema})
 
       return {
         command: (c) => {
@@ -145,11 +146,14 @@ const a = defineCommand({
   type: ApplicationCommandType.Message,
   name: 'reverse',
 }).createHandler({
-  reverse: (schema) => ({
-    command(c) {
-      return c.reply({content: ''})
-    },
-  }),
+  reverse: (schema) => {
+    console.log({schema})
+    return {
+      command(c) {
+        return c.reply({content: ''})
+      },
+    }
+  },
 })
 
 const b = defineCommand({
@@ -184,19 +188,24 @@ const b = defineCommand({
 }).createHandler({
   test3: {
     subgroup: {
-      sub1: (s) => ({
-        command(c) {
-          c
-          return c.reply({content: ''})
-        },
-      }),
+      sub1: (schema) => {
+        console.log({schema})
+
+        return {
+          command(c) {
+            c
+            return c.reply({content: ''})
+          },
+        }
+      },
     },
   },
 })
 
 commandsInit([
-  // test1,
+  test1,
   test2,
-  // a,
+  a,
   // b,
 ])
+

@@ -26,8 +26,6 @@ import {
 } from 'discord-api-types/v10'
 import type {OptionToObject} from './types.ts'
 
-// type F = APIApplicationCommandInteractionDataOption
-// type F = APIApplicationCommandInteractionDataBasicOption
 
 /** Type guard for `APIApplicationCommandOption` */
 export type PickType<T extends APIApplicationCommandOption, Type extends ApplicationCommandOptionType> = T extends T & {
@@ -149,7 +147,12 @@ export class ApplicationCommandAutocompleteContext<T extends APIApplicationComma
 
 // TODO
 export class MessageComponentContext {
-  /* TODO */
+  reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data,
+    }
+  }
 }
 
 // TODO

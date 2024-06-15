@@ -1,5 +1,6 @@
-import {ApplicationCommandOptionType, ApplicationCommandType} from 'discord-api-types/v10'
-import {defineCommand} from '../src/builder.ts'
+import {ApplicationCommandOptionType, ApplicationCommandType, ButtonStyle, ComponentType} from 'discord-api-types/v10'
+import {defineCommand} from '../mod.ts'
+// import {defineCommand} from '../src/builder.ts'
 
 const test1 = defineCommand({
   name: 'test1',
@@ -8,7 +9,25 @@ const test1 = defineCommand({
   test1: () => {
     return {
       command: (c) => {
-        return c.reply({content: ''})
+        return c.reply({
+          content: '1',
+          components: [
+            {
+              type: ComponentType.ActionRow,
+              components: [
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Primary,
+                  custom_id: 'btn',
+                  label: 'Btn 1',
+                },
+              ],
+            },
+          ],
+        })
+      },
+      messageComponent: (c) => {
+        return c.reply({content: '2'})
       },
     }
   },
@@ -33,7 +52,25 @@ const test2 = defineCommand({
     sub2: () => {
       return {
         command: (c) => {
-          return c.reply({content: 'test2 sub2'})
+          return c.reply({
+            content: 'test2 sub2',
+            components: [
+              {
+                type: ComponentType.ActionRow,
+                components: [
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Primary,
+                    custom_id: 'btn',
+                    label: 'Btn 1',
+                  },
+                ],
+              },
+            ],
+          })
+        },
+        messageComponent: (c) => {
+          return c.reply({content: '1'})
         },
       }
     },
@@ -59,11 +96,32 @@ const test3 = defineCommand({
 }).createHandler({
   test3: {
     'sub-g1': {
-      sub1: (c) => ({
+      sub1: () => ({
         command: (c) => c.reply({content: 'test3 sub-g1 sub1'}),
       }),
       sub2: (c) => ({
-        command: (c) => c.reply({content: 'test3 sub-g1 sub2'}),
+        // command: (c) => c.reply({content: 'test3 sub-g1 sub2'}),
+        command: (c) => {
+          return c.reply({
+            content: 'test3 sub-g1 sub2',
+            components: [
+              {
+                type: ComponentType.ActionRow,
+                components: [
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Primary,
+                    custom_id: 'btn',
+                    label: 'Btn 1',
+                  },
+                ],
+              },
+            ],
+          })
+        },
+        messageComponent: (c) => {
+          return c.reply({content: '1'})
+        },
       }),
     },
     sub1: (c) => ({
@@ -75,19 +133,23 @@ const test3 = defineCommand({
   },
 })
 
-/* const test4 = defineCommand({
+const test4 = defineCommand({
   type: ApplicationCommandType.User,
   name: 'test4',
 }).createHandler({
-  test4: (c) => c.reply({content: '1'}),
+  test4: () => ({
+    command: (c) => c.reply({content: '1'}),
+  }),
 })
 
 const test5 = defineCommand({
   type: ApplicationCommandType.Message,
   name: 'test5',
 }).createHandler({
-  test5: (c) => c.reply({content: '2'}),
-}) */
+  test5: () => ({
+    command: (c) => c.reply({content: '1'}),
+  }),
+})
 
 defineCommand({
   name: 'autocomplete',
@@ -168,14 +230,12 @@ const all = defineCommand({
     },
   ],
 }).createHandler({
-  // all: (command) => ({
-  //   command: (c) => {
-  //     console.log(c.getNumber('number').value)
-
-  //     return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
-  //   },
-  // }),
-
+  all: (command) => ({
+    command: (c) => {
+      console.log(c.getNumber('number').value)
+      return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
+    },
+  }),
 })
 
 const all2 = defineCommand({

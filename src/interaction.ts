@@ -28,40 +28,30 @@ import {
   ModalContext,
 } from './context.ts'
 import {associateBy} from '@std/collections'
-import {Command, CommandSchema, ContextMenuCommandSchema, DefineHandler, OptionToObject} from './types.ts'
+import {Command, DefineHandler} from './types.ts'
 import {commandSchema, userCommandSchema} from './schema.ts'
 
-const unknownCommand = (): APIInteractionResponse => {
+const unknownCommand = (text?: string): APIInteractionResponse => {
   return {
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
-      content: 'Unknown command',
+      content: text ?? 'Unknown command',
       flags: MessageFlags.Ephemeral,
     },
   }
 }
 
-const errorCommand = (text: string): APIInteractionResponse => {
-  return {
-    type: InteractionResponseType.ChannelMessageWithSource,
-    data: {
-      content: text,
-      flags: MessageFlags.Ephemeral,
-    },
-  }
-}
-
-
-export const commandToAct = (command: RESTPostAPIApplicationCommandsJSONBody) => {
+const commandToAct = (command: RESTPostAPIApplicationCommandsJSONBody) => {
   const out: Record<string, any> = {}
 
+  // out[command.name] ??= command // def
   out[command.name] ??= {} // def
   if (command.options) {
     out[command.name] = associateBy(command.options, (v) => v.name)
 
     for (const key in out[command.name]) {
       if (out[command.name][key].options) {
-        // out[command.name][key] ??= {}
+        // out[command.name][key] ??= out
         out[command.name][key] = associateBy(
           out[command.name][key].options as APIApplicationCommandOption[],
           (v) => v.name
@@ -83,35 +73,34 @@ export const commandToAct = (command: RESTPostAPIApplicationCommandsJSONBody) =>
   return out
 }
 
-export const commandsInit = (init: Command[]) => {
+const commandsInit = async (init: Command[]) => {
   const out: Record<string, any> = {}
-  // const commands: Record<string, any> = {}
 
   for (const {command, handler} of init) {
     const cAct = commandToAct(command) // to pretty obj
-    console.log(cAct)
+    // console.log(cAct)
 
     for (const key in handler) {
       const l0 = handler[key]
       if (typeof l0 === 'function') {
-        // out[key] = l0(command)
-        out[key] = l0(cAct[key])
+        // out[key] = await l0()
+        out[key] = await l0(cAct[key])
       }
       if (typeof l0 === 'object') {
         out[key] ??= {}
         for (const key2 in l0) {
           const l1 = l0[key2]
           if (typeof l1 === 'function') {
-            // out[key][key2] = l1(command)
-            out[key][key2] = l1(cAct[key][key2])
+            // out[key][key2] = await l1()
+            out[key][key2] = await l1(cAct[key][key2])
           }
           if (typeof l1 === 'object') {
             out[key][key2] ??= {}
             for (const key3 in l1) {
               const l2 = l1[key3]
               if (typeof l2 === 'function') {
-                // out[key][key2][key3] = l2(command)
-                out[key][key2][key3] = l2(cAct[key][key2][key3])
+                // out[key][key2][key3] = await l2()
+                out[key][key2][key3] = await l2(cAct[key][key2][key3])
               }
             }
           }
@@ -120,13 +109,13 @@ export const commandsInit = (init: Command[]) => {
     }
   }
 
-  console.log(out)
+  // console.log(out)
   return out
 }
 
-export const createHandler = (commands: Command[]) => {
-  const obj = commandsInit(commands) as any
-  console.log(obj)
+export const createHandler = async (commands: Command[]) => {
+  const obj = (await commandsInit(commands)) as any
+  // console.log(obj)
 
   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
     if (interaction.type === InteractionType.Ping) {
@@ -142,17 +131,22 @@ export const createHandler = (commands: Command[]) => {
         )
 
         if (!interaction.data.options) {
-          return obj[interaction.data.name](c)
+          return obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
         } else {
           for (const option of interaction.data.options) {
             if (option.type === ApplicationCommandOptionType.Subcommand) {
-              return obj[interaction.data.name][option.name](c)
+              return (
+                obj[interaction.data.name][option.name]?.command(c) ?? unknownCommand('command handler is undefined')
+              )
             }
 
             if (option.type === ApplicationCommandOptionType.SubcommandGroup) {
               for (const subOption of option.options) {
                 if (subOption.type === ApplicationCommandOptionType.Subcommand) {
-                  return obj[interaction.data.name][option.name][subOption.name](c)
+                  return (
+                    obj[interaction.data.name][option.name][subOption.name]?.command(c) ??
+                    unknownCommand('command handler is undefined')
+                  )
                 }
               }
             }
@@ -162,25 +156,55 @@ export const createHandler = (commands: Command[]) => {
 
       if (interaction.data.type === ApplicationCommandType.User) {
         const c = new ContextMenuCommandContext(obj[interaction.data.name])
-        return obj[interaction.data.name](c)
+        return obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
       }
 
       if (interaction.data.type === ApplicationCommandType.Message) {
         const c = new ContextMenuCommandContext(obj[interaction.data.name])
-        return obj[interaction.data.name](c)
+        return obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
       }
     }
 
     if (interaction.type === InteractionType.MessageComponent) {
+      // find path
+      if (interaction.message.interaction_metadata) {
+        if (interaction.message.interaction_metadata.type === InteractionType.ApplicationCommand) {
+          const name = interaction.message.interaction_metadata?.name as string
+          if (!name) return unknownCommand('Message Component interaction_metadata.name is undefined')
+
+          const c = new MessageComponentContext()
+          const keys = name.split(' ', 3) // 'cmd sub-group sub'
+
+          if (keys.length === 1) {
+            return obj[keys[0]]?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
+          } else if (keys.length === 2) {
+            return obj[keys[0]][keys[1]]?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
+          } else if (keys.length === 3) {
+            return (
+              obj[keys[0]][keys[1]][keys[2]]?.messageComponent(c) ??
+              unknownCommand('messageComponent handler is undefined')
+            )
+          }
+        }
+      }
+
       const c = new MessageComponentContext()
+      // console.log(interaction)
+      console.log(interaction.message.interaction_metadata)
+
+      // obj[interaction.message]?.messageComponent(c)
+
+      return unknownCommand('messageComponent handler is undefined')
     }
 
     if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
       const c = new ApplicationCommandAutocompleteContext()
+      return unknownCommand('commandAutocomplete handler is undefined')
     }
 
     if (interaction.type === InteractionType.ModalSubmit) {
       const c = new ModalContext()
+      return unknownCommand('modalSubmit handler is undefined')
     }
 
     return unknownCommand()
@@ -243,7 +267,7 @@ export const createHandler = (commands: Command[]) => {
 // }
 
 /**
- * Discord
+ * Example built on web standards
  *
  * @example
  * ```ts
@@ -251,7 +275,7 @@ export const createHandler = (commands: Command[]) => {
  * import {commands} from './commands.ts'
  *
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
- * const interaction = discordInteraction(key, [])
+ * const interaction = await discordInteraction(key, [])
  *
  * Deno.serve(req => {
  *   const uri = new URL(req.url)
@@ -262,8 +286,8 @@ export const createHandler = (commands: Command[]) => {
  * })
  * ```
  */
-export const discordInteraction = (key: CryptoKey, commands: Command[]) => {
-  const handler = createHandler(commands)
+export const discordInteraction = async (key: CryptoKey, commands: Command[]) => {
+  const handler = await createHandler(commands)
 
   return async (req: Request): Promise<Response> => {
     const invalid = await verifyRequestSignature(req, key)

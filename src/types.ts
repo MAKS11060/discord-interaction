@@ -46,8 +46,8 @@ export type OptionToObject<T extends APIApplicationCommandOption> = {
 
 export type CommandHandler<
   T extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandSubcommandOption,
-  O extends APIApplicationCommandOption | never
-> = (command: T) =>
+  O extends APIApplicationCommandOption
+> = (command: OptionToObject<O>) =>
   | {
       /**
        * @example
@@ -62,6 +62,13 @@ export type CommandHandler<
       modalSubmit?(c: ModalContext): APIInteractionResponse | Promise<APIInteractionResponse>
     }
   | Autocomplete<O>
+
+export type ContextMenuHandler<
+  T extends RESTPostAPIContextMenuApplicationCommandsJSONBody,
+  O extends APIApplicationCommandOption = any
+> = (command: OptionToObject<O>) => {
+  command(c: ContextMenuCommandContext<T>): APIInteractionResponse | Promise<APIInteractionResponse>
+}
 
 export type CommandSchema<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
   T['options'] extends APIApplicationCommandOption[] & EmptyArray<T['options']>
@@ -87,10 +94,6 @@ export type CommandSchema<T extends RESTPostAPIChatInputApplicationCommandsJSONB
         : never
       : {[K in T['name']]: CommandHandler<T, never>}
     : {[K in T['name']]: CommandHandler<T, never>}
-
-export type ContextMenuHandler<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> = (command: T) => {
-  command(c: ContextMenuCommandContext<T>): APIInteractionResponse | Promise<APIInteractionResponse>
-}
 
 export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> = {
   [K in T['name']]: ContextMenuHandler<T>
