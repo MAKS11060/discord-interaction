@@ -81,14 +81,11 @@ export const commandSchema = z
   })
   .passthrough()
 
-
-export const userCommandSchema = commandSchema.omit({
+export const userOrMessageCommandSchema = commandSchema.omit({
   description: true,
   options: true,
 })
 
-export const messageCommandSchema = userCommandSchema
-
 export const commandsScheme = z.array(commandSchema).max(100)
-export const userCommandsSchema = z.array(userCommandSchema).max(5)
-export const messageCommandsSchema = z.array(messageCommandSchema).max(5)
+export const userCommandsSchema = z.array(userOrMessageCommandSchema).max(5)
+export const messageCommandsSchema = z.array(userOrMessageCommandSchema).max(5)

@@ -38,7 +38,7 @@ type Autocomplete<T extends APIApplicationCommandOption> = T extends {autocomple
     }
   : never
 
-type isRequiredOption<T extends APIApplicationCommandBasicOption> = T extends {required: true} ? T : T | null
+export type isRequiredOption<T extends APIApplicationCommandBasicOption> = T extends {required: true} ? T : T | null
 
 export type OptionToObject<T extends APIApplicationCommandOption> = {
   [K in T['name']]: T extends {name: K} ? T : never
@@ -58,8 +58,21 @@ export type CommandHandler<
        * ```
        */
       command(c: ApplicationCommandContext<T, O>): APIInteractionResponse | Promise<APIInteractionResponse>
+
       messageComponent?(c: MessageComponentContext): APIInteractionResponse | Promise<APIInteractionResponse>
-      modalSubmit?(c: ModalContext): APIInteractionResponse | Promise<APIInteractionResponse>
+      /**
+       * Handle `modal` submission
+       *
+       * @example
+       * ```ts
+       * modalSubmit: (c) => {
+       *   if (c.data.custom_id === 'input') {
+       *     return c.reply({content: 'modal'})
+       *   }
+       * }
+       * ```
+       */
+      modalSubmit?(c: ModalContext): APIInteractionResponse | Promise<APIInteractionResponse> | void
     }
   | Autocomplete<O>
 

@@ -3,8 +3,7 @@
  *
  * Discord interaction
  *
- *
- * @example Use `Hono`
+ * @example Use `Hono` framework
  * ```ts
  * import {Hono} from 'hono'
  * import {discordInteraction, importKeyRaw} from '@maks11060/discord-interaction/hono'
@@ -18,5 +17,5 @@
  * ```
  */
 
-export {importKeyRaw, verifyRequestSignature} from './src/lib/ed25519.ts'
+export {importKeyRaw} from './src/lib/ed25519.ts'
 export {discordInteraction, defineCommand} from './src/interaction.ts'

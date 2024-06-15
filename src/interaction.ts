@@ -7,6 +7,7 @@ import {
   APIInteractionResponseCallbackData,
   APIInteractionResponseChannelMessageWithSource,
   APIInteractionResponseUpdateMessage,
+  APIMessageInteractionMetadata,
   APIModalActionRowComponent,
   ApplicationCommandOptionType,
   ApplicationCommandType,
@@ -17,6 +18,7 @@ import {
   RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
+  RESTPutAPIApplicationCommandsJSONBody,
   TextInputStyle,
 } from 'discord-api-types/v10'
 import {verifyRequestSignature} from './lib/ed25519.ts'
@@ -28,8 +30,8 @@ import {
   ModalContext,
 } from './context.ts'
 import {associateBy} from '@std/collections'
-import {Command, DefineHandler} from './types.ts'
-import {commandSchema, userCommandSchema} from './schema.ts'
+import {Command, DefineHandler, Unpack} from './types.ts'
+import {commandSchema, userOrMessageCommandSchema} from './schema.ts'
 
 const unknownCommand = (text?: string): APIInteractionResponse => {
   return {
@@ -109,13 +111,11 @@ const commandsInit = async (init: Command[]) => {
     }
   }
 
-  // console.log(out)
   return out
 }
 
 export const createHandler = async (commands: Command[]) => {
   const obj = (await commandsInit(commands)) as any
-  // console.log(obj)
 
   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
     if (interaction.type === InteractionType.Ping) {
@@ -150,6 +150,10 @@ export const createHandler = async (commands: Command[]) => {
                 }
               }
             }
+
+            if (obj[interaction.data.name]?.command) {
+              return obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+            }
           }
         }
       }
@@ -166,33 +170,31 @@ export const createHandler = async (commands: Command[]) => {
     }
 
     if (interaction.type === InteractionType.MessageComponent) {
-      // find path
-      if (interaction.message.interaction_metadata) {
-        if (interaction.message.interaction_metadata.type === InteractionType.ApplicationCommand) {
-          const name = interaction.message.interaction_metadata?.name as string
-          if (!name) return unknownCommand('Message Component interaction_metadata.name is undefined')
-
-          const c = new MessageComponentContext()
-          const keys = name.split(' ', 3) // 'cmd sub-group sub'
-
-          if (keys.length === 1) {
-            return obj[keys[0]]?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
-          } else if (keys.length === 2) {
-            return obj[keys[0]][keys[1]]?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
-          } else if (keys.length === 3) {
-            return (
-              obj[keys[0]][keys[1]][keys[2]]?.messageComponent(c) ??
-              unknownCommand('messageComponent handler is undefined')
-            )
-          }
-        }
-      }
-
       const c = new MessageComponentContext()
-      // console.log(interaction)
-      console.log(interaction.message.interaction_metadata)
+      const metadata = interaction.message?.interaction_metadata as
+        | (APIMessageInteractionMetadata & {name: string})
+        | undefined
 
-      // obj[interaction.message]?.messageComponent(c)
+      if (metadata?.type === InteractionType.ApplicationCommand) {
+        const name = metadata?.name as string
+        if (!name) return unknownCommand('Message Component interaction_metadata.name is undefined')
+        const keys = name.split(' ', 3) // 'cmd sub-group sub'
+
+        // find path
+        // if (keys.length === 1) {
+        //   return obj[keys[0]]?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
+        // } else if (keys.length === 2) {
+        //   return obj[keys[0]][keys[1]]?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
+        // } else if (keys.length === 3) {
+        //   return (
+        //     obj[keys[0]][keys[1]][keys[2]]?.messageComponent(c) ??
+        //     unknownCommand('messageComponent handler is undefined')
+        //   )
+        // }
+
+        const handlers = keys.reduce((acc, key) => acc[key], obj) // obj[cmd][sub-group][sub]
+        return handlers?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
+      }
 
       return unknownCommand('messageComponent handler is undefined')
     }
@@ -203,68 +205,53 @@ export const createHandler = async (commands: Command[]) => {
     }
 
     if (interaction.type === InteractionType.ModalSubmit) {
-      const c = new ModalContext()
+      // Discord did not provide interaction metadata
+      const c = new ModalContext(interaction.data)
+      const metadata = interaction.message?.interaction_metadata as
+        | (APIMessageInteractionMetadata & {name: string})
+        | undefined
+
+      if (metadata?.type === InteractionType.ApplicationCommand) {
+        const name = metadata?.name as string
+        if (!name) return unknownCommand('Message Component interaction_metadata.name is undefined')
+        const keys = name.split(' ', 3) // 'cmd sub-group sub'
+
+        const handlers = keys.reduce((acc, key) => acc[key], obj) // obj[cmd][sub-group][sub]
+        return handlers?.modalSubmit(c) ?? unknownCommand('modalSubmit handler is undefined')
+      }
+
+      // best solution so far
+      // fire all modalSubmit handler. if use ApplicationCommandContext.modal()
+      for (const key1 in obj) {
+        const l1 = obj[key1]
+        if (l1?.modalSubmit) {
+          const res = await l1.modalSubmit(c)
+          if (res) return res
+        } else {
+          for (const key2 in l1) {
+            const l2 = l1[key2]
+            if (l2?.modalSubmit) {
+              const res = await l2.modalSubmit(c)
+              if (res) return res
+            } else {
+              for (const key3 in l2) {
+                const l3 = l2[key3]
+                if (l3?.modalSubmit) {
+                  const res = await l3.modalSubmit(c)
+                  if (res) return res
+                }
+              }
+            }
+          }
+        }
+      }
+
       return unknownCommand('modalSubmit handler is undefined')
     }
 
     return unknownCommand()
   }
 }
-
-// export const createHandler2 = (commands: Handler[]) => {
-//   const list = commands.map(({command, executor}) => {
-//     // return {command, handler: executor(command)}
-//   })
-//   console.log(commands)
-
-//   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
-//     if (interaction.type === InteractionType.Ping) {
-//       return {type: InteractionResponseType.Pong}
-//     }
-
-//     if (interaction.type === InteractionType.ApplicationCommand) {
-//       for (const {command, handler} of list) {
-//         if (interaction.data.name === command.name) {
-//           if (!handler.command) return errorCommand('command handler is undefined')
-
-//           const ctx = new InteractionContext(interaction, command)
-//           return await handler.command(ctx)
-//         }
-//       }
-//     }
-
-//     if (interaction.type === InteractionType.MessageComponent) {
-//       for (const {command, handler} of list) {
-//         if (interaction.message.interaction) {
-//           if (interaction.message.interaction.name === command.name) {
-//             if (!handler.messageComponent) return errorCommand('messageComponent handler is undefined')
-
-//             const ctx = new InteractionContext(interaction, command)
-//             return await handler.messageComponent(ctx)
-//           }
-//         }
-//       }
-//     }
-
-//     if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-//       for (const {command, handler} of list) {
-//         if (interaction.data.name === command.name) {
-//           if (!handler.commandAutocomplete) return errorCommand('commandAutocomplete handler is undefined')
-
-//           const ctx = new InteractionContext(interaction, command)
-//           return await handler.commandAutocomplete(ctx)
-//         }
-//       }
-//     }
-
-//     if (interaction.type === InteractionType.ModalSubmit) {
-//       new ModalContext()
-//       return errorCommand('no implemented ModalSubmit')
-//     }
-
-//     return unknownCommand()
-//   }
-// }
 
 /**
  * Example built on web standards
@@ -302,12 +289,20 @@ const validateCommand = <T extends RESTPostAPIApplicationCommandsJSONBody>(comma
   if (command.type === undefined || command.type === ApplicationCommandType.ChatInput) {
     return commandSchema.passthrough().parse(command) as unknown as T
   } else if (command.type === ApplicationCommandType.Message || command.type === ApplicationCommandType.User) {
-    return userCommandSchema.passthrough().parse(command) as T
+    return userOrMessageCommandSchema.passthrough().parse(command) as T
   }
   return commandSchema.passthrough().parse(command) as unknown as T
 }
 
-export const defineCommand = <const T extends RESTPostAPIApplicationCommandsJSONBody>(command: T) => {
+export const defineCommand = <const T extends RESTPostAPIApplicationCommandsJSONBody>(
+  command: T
+): {
+  command: T
+  createHandler(handler: DefineHandler<T>): {
+    command: T
+    handler: DefineHandler<T>
+  }
+} => {
   command = validateCommand(command)
 
   return {
@@ -317,3 +312,14 @@ export const defineCommand = <const T extends RESTPostAPIApplicationCommandsJSON
     },
   }
 }
+
+// export const defineCommands = <const T extends RESTPostAPIApplicationCommandsJSONBody[]>(commands: T) => {
+//   // command = validateCommand(command)
+//   let command
+//   return {
+//     command,
+//     createHandler(handler: DefineHandler<Unpack<T>>) {
+//       return {command, handler}
+//     },
+//   }
+// }

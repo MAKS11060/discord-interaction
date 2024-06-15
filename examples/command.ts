@@ -1,6 +1,12 @@
-import {ApplicationCommandOptionType, ApplicationCommandType, ButtonStyle, ComponentType} from 'discord-api-types/v10'
+import {
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  ButtonStyle,
+  ComponentType,
+  TextInputStyle,
+} from 'discord-api-types/v10'
 import {defineCommand} from '../mod.ts'
-// import {defineCommand} from '../src/builder.ts'
+import {ulid} from 'jsr:@std/ulid'
 
 const test1 = defineCommand({
   name: 'test1',
@@ -27,7 +33,7 @@ const test1 = defineCommand({
         })
       },
       messageComponent: (c) => {
-        return c.reply({content: '2'})
+        return c.reply({content: '1'})
       },
     }
   },
@@ -62,7 +68,7 @@ const test2 = defineCommand({
                     type: ComponentType.Button,
                     style: ButtonStyle.Primary,
                     custom_id: 'btn',
-                    label: 'Btn 1',
+                    label: 'Open modal',
                   },
                 ],
               },
@@ -70,7 +76,29 @@ const test2 = defineCommand({
           })
         },
         messageComponent: (c) => {
-          return c.reply({content: '1'})
+          return c.modal({
+            title: 'modal',
+            custom_id: 'modal',
+            components: [
+              {
+                type: ComponentType.ActionRow,
+                components: [
+                  {
+                    type: ComponentType.TextInput,
+                    custom_id: 'input',
+                    label: 'Input',
+                    style: TextInputStyle.Paragraph,
+                  },
+                ],
+              },
+            ],
+          })
+        },
+        modalSubmit: (c) => {
+          console.log('modal')
+          if (c.data.custom_id === 'input') {
+            return c.reply({content: 'modal'})
+          }
         },
       }
     },
@@ -99,7 +127,7 @@ const test3 = defineCommand({
       sub1: () => ({
         command: (c) => c.reply({content: 'test3 sub-g1 sub1'}),
       }),
-      sub2: (c) => ({
+      sub2: () => ({
         // command: (c) => c.reply({content: 'test3 sub-g1 sub2'}),
         command: (c) => {
           return c.reply({
@@ -120,7 +148,27 @@ const test3 = defineCommand({
           })
         },
         messageComponent: (c) => {
-          return c.reply({content: '1'})
+          return c.replyUpdate({
+            content: '3',
+            components: [
+              {
+                type: ComponentType.ActionRow,
+                components: [
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Primary,
+                    custom_id: 'btn',
+                    label: 'Btn 2',
+                  },
+                ],
+              },
+            ],
+          })
+        },
+        modalSubmit: (c) => {
+          console.log('modal 2')
+
+          return c.reply({content: 'modal 2'})
         },
       }),
     },
@@ -151,8 +199,8 @@ const test5 = defineCommand({
   }),
 })
 
-defineCommand({
-  name: 'autocomplete',
+const test6 = defineCommand({
+  name: 'test6',
   description: 'autocomplete',
   options: [
     {
@@ -169,12 +217,44 @@ defineCommand({
     },
   ],
 }).createHandler({
-  autocomplete: () => ({
+  test6: () => ({
     command: (c) => {
       return c.reply({content: '1'})
     },
     autocomplete: (c) => {
       return c.autocomplete({choices: []})
+    },
+  }),
+})
+
+const test7 = defineCommand({
+  name: 'test7',
+  description: 'Generate id',
+  options: [
+    {
+      type: ApplicationCommandOptionType.String,
+      name: 'format',
+      description: 'select format',
+      choices: [
+        {name: 'uuid', value: 'uuid'},
+        {name: 'ulid', value: 'ulid'},
+      ],
+      required: true,
+    },
+  ],
+}).createHandler({
+  test7: (o) => ({
+    command: (c) => {
+      const f = c.getString('format') // as (typeof o.format.choices)[number]['value']
+
+      if (f === 'ulid') {
+        return c.reply({content: `ulid \`\`\`${ulid()}\`\`\``})
+      }
+      if (f === 'uuid') {
+        return c.reply({content: `uuid \`\`\`${crypto.randomUUID()}\`\`\``})
+      }
+
+      return c.reply({content: '1'})
     },
   }),
 })
@@ -230,7 +310,7 @@ const all = defineCommand({
     },
   ],
 }).createHandler({
-  all: (command) => ({
+  all: () => ({
     command: (c) => {
       console.log(c.getNumber('number').value)
       return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
@@ -296,13 +376,15 @@ const all2 = defineCommand({
     },
   ],
 }).createHandler({
-  all: (command) => ({
-    command: (c) => {
-      console.log(c.getNumber('number').value)
+  all2: {
+    sub: () => ({
+      command: (c) => {
+        console.log(c.getNumber('number').value)
 
-      return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
-    },
-  }),
+        return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
+      },
+    }),
+  },
 })
 
-export const commands = [test1, test2, test3, /* test4, test5, */ all, all2]
+export const commands = [test1, test2, test3, test4, test5, all, all2, test7]

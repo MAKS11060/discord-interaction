@@ -23,16 +23,23 @@ import {
   InteractionType,
   ApplicationCommandType,
   APIInteractionDataResolvedGuildMember,
+  APIModalSubmission,
+  APIInteractionDataOptionBase,
+  APIApplicationCommandBasicOption,
+  APIApplicationCommandOptionChoice,
 } from 'discord-api-types/v10'
 import type {OptionToObject} from './types.ts'
 
-
 /** Type guard for `APIApplicationCommandOption` */
-export type PickType<T extends APIApplicationCommandOption, Type extends ApplicationCommandOptionType> = T extends T & {
+type PickType<T extends APIApplicationCommandOption, Type extends ApplicationCommandOptionType> = T extends T & {
   type: Type
 }
   ? T
   : never
+
+type isRequiredOption<T extends APIApplicationCommandOption, R> = T extends {required: true} ? R : R | null
+
+type extractChoices<T extends APIApplicationCommandOptionChoice> = T['name']
 
 export class ApplicationCommandContext<
   C extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandOption,
@@ -50,10 +57,26 @@ export class ApplicationCommandContext<
     return this.options[name]
   }
 
-  getString<K extends PickType<T, ApplicationCommandOptionType.String>['name']>(
+  /*   getString<K extends PickType<T, ApplicationCommandOptionType.String>['name']>(
     name: K
   ): T extends {name: K} ? T : never {
     return this.options[name]
+  } */
+  getString<K extends PickType<T, ApplicationCommandOptionType.String>['name']>(
+    name: K
+  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.String, string>['value']> {
+    const interaction = this.interaction
+    if (
+      interaction.type === InteractionType.ApplicationCommand &&
+      interaction.data.type === ApplicationCommandType.ChatInput
+    ) {
+      for (const option of interaction.data.options ?? []) {
+        if (option.type === ApplicationCommandOptionType.String && option.name === name) {
+          return option.value
+        }
+      }
+    }
+    return null!
   }
 
   getInteger<K extends PickType<T, ApplicationCommandOptionType.Integer>['name']>(
@@ -122,7 +145,9 @@ export class ApplicationCommandContext<
     }
   }
 
-  /** Create modal */
+  /**
+   * Create `modal` window. WARNING calls all modal window handlers.
+   */
   modal(data: APIModalInteractionResponseCallbackData): APIModalInteractionResponse {
     return {
       type: InteractionResponseType.Modal,
@@ -145,11 +170,29 @@ export class ApplicationCommandAutocompleteContext<T extends APIApplicationComma
   }
 }
 
-// TODO
 export class MessageComponentContext {
+  /** Send a new message in response */
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
+      data,
+    }
+  }
+
+  /** Replaces the current message */
+  replyUpdate(data: APIInteractionResponseCallbackData): APIInteractionResponseUpdateMessage {
+    return {
+      type: InteractionResponseType.UpdateMessage,
+      data,
+    }
+  }
+
+  /**
+   * Create `modal` window.
+   */
+  modal(data: APIModalInteractionResponseCallbackData): APIModalInteractionResponse {
+    return {
+      type: InteractionResponseType.Modal,
       data,
     }
   }
@@ -157,6 +200,8 @@ export class MessageComponentContext {
 
 // TODO
 export class ModalContext {
+  constructor(readonly data: APIModalSubmission) {}
+
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
