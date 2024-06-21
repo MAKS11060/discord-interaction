@@ -1,4 +1,4 @@
-import {concat} from '@std/bytes'
+import {concat} from '@std/bytes/concat'
 import {decodeHex, encodeHex} from '@std/encoding/hex'
 
 const encoder = new TextEncoder()

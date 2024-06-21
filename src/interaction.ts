@@ -1,25 +1,14 @@
 import {
-  APIApplicationCommandAutocompleteResponse,
-  APIApplicationCommandOption,
-  APICommandAutocompleteInteractionResponseCallbackData,
-  APIInteraction,
-  APIInteractionResponse,
-  APIInteractionResponseCallbackData,
-  APIInteractionResponseChannelMessageWithSource,
-  APIInteractionResponseUpdateMessage,
-  APIMessageInteractionMetadata,
-  APIModalActionRowComponent,
+  type APIApplicationCommandOption,
+  type APIInteraction,
+  type APIInteractionResponse,
+  type APIMessageInteractionMetadata,
   ApplicationCommandOptionType,
   ApplicationCommandType,
-  ComponentType,
   InteractionResponseType,
   InteractionType,
   MessageFlags,
-  RESTPostAPIApplicationCommandsJSONBody,
-  RESTPostAPIChatInputApplicationCommandsJSONBody,
-  RESTPostAPIContextMenuApplicationCommandsJSONBody,
-  RESTPutAPIApplicationCommandsJSONBody,
-  TextInputStyle,
+  type RESTPostAPIApplicationCommandsJSONBody,
 } from 'discord-api-types/v10'
 import {verifyRequestSignature} from './lib/ed25519.ts'
 import {
@@ -29,8 +18,8 @@ import {
   MessageComponentContext,
   ModalContext,
 } from './context.ts'
-import {associateBy} from '@std/collections'
-import {Command, DefineHandler, Unpack} from './types.ts'
+import {associateBy} from '@std/collections/associate-by'
+import type {Command, DefineHandler} from './types.ts'
 import {commandSchema, userOrMessageCommandSchema} from './schema.ts'
 
 const unknownCommand = (text?: string): APIInteractionResponse => {

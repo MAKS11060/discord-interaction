@@ -2,7 +2,7 @@
 
 import {parseArgs} from '@std/cli'
 import {resolve, toFileUrl} from '@std/path'
-import {RESTOAuth2ImplicitAuthorizationURLFragmentResult} from 'discord-api-types/v10'
+import type {RESTOAuth2ImplicitAuthorizationURLFragmentResult} from 'discord-api-types/v10'
 import {Checkbox, Select, prompt} from 'https://deno.land/x/cliffy/prompt/mod.ts'
 import {
   clientId,
