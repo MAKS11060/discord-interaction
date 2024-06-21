@@ -10,17 +10,18 @@
  * const app = new Hono()
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
  *
- * app.post('/interaction', ...discordInteraction(key, []))
+ * app.post('/interaction', ...await discordInteraction(key, []))
  *
  * Deno.serve(app.fetch)
  * ```
  */
 
 import type {APIInteraction} from 'discord-api-types/v10'
-import {createFactory, createMiddleware} from 'hono/factory'
+import {createFactory, createMiddleware, CreateHandlersInterface} from 'hono/factory'
 import {createHandler} from '../interaction.ts'
 import {verifyRequestSignature as verifyRequest} from '../lib/ed25519.ts'
 import type {Command} from '../types.ts'
+import { Handler, MiddlewareHandler } from "hono";
 
 export {importKeyRaw} from '../lib/ed25519.ts'
 
@@ -52,7 +53,10 @@ const verifyRequestSignature = (key: CryptoKey) => {
  * app.post('/interaction', ...await discordInteraction(key, []))
  * ```
  */
-export const discordInteraction = async (key: CryptoKey, commands: Command[]) => {
+export const discordInteraction = async (
+  key: CryptoKey,
+  commands: Command[]
+): Promise<Handler[]> => {
   const handler = await createHandler(commands)
 
   const interactionHandler = createMiddleware(async (c) => {

@@ -10,15 +10,15 @@
     "publish-dry-run": "deno publish --dry-run"
   },
   "imports": {
-    "hono": "jsr:@hono/hono",
-    "@std/bytes": "jsr:@std/bytes@^0.224.0",
+    "hono": "jsr:@hono/hono@4",
+    "@std/bytes": "jsr:@std/bytes@1",
     "@std/cli": "jsr:@std/cli@^0.224.0",
     "@std/collections": "jsr:@std/collections@^0.224.0",
     "@std/dotenv": "jsr:@std/dotenv@^0.224.0",
     "@std/encoding": "jsr:@std/encoding@^0.224.0",
     "@std/path": "jsr:@std/path@^0.224.0",
-    "discord-api-types": "npm:discord-api-types",
-    "zod": "npm:zod"
+    "discord-api-types": "npm:discord-api-types@0",
+    "zod": "npm:zod@3"
   },
   "exports": {
     ".": "./mod.ts",

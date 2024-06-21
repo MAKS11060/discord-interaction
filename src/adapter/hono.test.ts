@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno test -A --watch
 import {Hono} from 'hono'
 import {discordInteraction} from './hono.ts'
-import {APIInteraction, InteractionType} from 'discord-api-types/v10'
+import {type APIInteraction, InteractionType} from 'discord-api-types/v10'
 import {assertEquals} from 'jsr:@std/assert'
 import {signRequest} from '../lib/ed25519.ts'
 
@@ -10,7 +10,7 @@ const app = new Hono()
 const keys = (await crypto.subtle.generateKey('Ed25519', false, ['sign', 'verify'])) as CryptoKeyPair
 const key = keys.publicKey //await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
 
-app.post('/interaction', ...discordInteraction(key, []))
+app.post('/interaction', ...(await discordInteraction(key, [])))
 
 Deno.test('ping', async (c) => {
   const body: APIInteraction = {

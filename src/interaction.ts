@@ -124,11 +124,7 @@ export const createHandler = async (commands: Command[]) => {
 
     if (interaction.type === InteractionType.ApplicationCommand) {
       if (interaction.data.type === ApplicationCommandType.ChatInput) {
-        const c = new ApplicationCommandContext(
-          interaction,
-          obj[interaction.data.name],
-          interaction.data.options as any
-        )
+        const c = new ApplicationCommandContext(interaction, obj[interaction.data.name])
 
         if (!interaction.data.options) {
           return obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
@@ -273,7 +269,10 @@ export const createHandler = async (commands: Command[]) => {
  * })
  * ```
  */
-export const discordInteraction = async (key: CryptoKey, commands: Command[]) => {
+export const discordInteraction = async (
+  key: CryptoKey,
+  commands: Command[]
+): Promise<(req: Request) => Promise<Response>> => {
   const handler = await createHandler(commands)
 
   return async (req: Request): Promise<Response> => {

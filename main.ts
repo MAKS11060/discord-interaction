@@ -2,7 +2,7 @@
 import '@std/dotenv/load'
 
 import {Hono} from 'hono'
-import {APIInteraction, APIInteractionResponse, InteractionType} from 'discord-api-types/v10'
+import {type APIInteraction, type APIInteractionResponse, InteractionType} from 'discord-api-types/v10'
 import {commands} from './examples/command.ts'
 import {importKeyRaw, discordInteraction} from './src/adapter/hono.ts'
 import {loggerBody} from 'https://raw.githubusercontent.com/MAKS11060/deno-libs/main/hono/loggerBody.ts'
@@ -12,18 +12,19 @@ const app = new Hono().post(
   '/interaction',
   loggerBody<APIInteraction, APIInteractionResponse>({
     incoming: ({type, data, member, channel, ...int}) => {
-      console.log('channel', channel?.id, channel?.name, '| member', member?.user.id, member?.user.global_name)
+      console.log(`%c${new Date().toLocaleTimeString()}`, 'color: orange')
+      // console.log('channel', channel?.id, channel?.name, '| member', member?.user.id, member?.user.global_name)
       console.log(InteractionType[type], data)
     },
     // incoming: (int) => {
     //   console.log(JSON.stringify(int))
     // },
     outgoing: (data) => {
-      console.log('outgoing ///////////////////////////////////////////')
-      console.log(data)
+      // console.log('%coutgoing ///////////////////////////////////////////', 'color: red')
+      // console.log(data)
     },
   }),
-  ...await discordInteraction(key, commands)
+  ...(await discordInteraction(key, commands))
 )
 
 if (Deno.env.has('KEY') && Deno.env.has('CERT')) {

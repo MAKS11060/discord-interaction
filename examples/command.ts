@@ -310,9 +310,24 @@ const all = defineCommand({
     },
   ],
 }).createHandler({
-  all: () => ({
+  all: (opts) => ({
     command: (c) => {
-      console.log(c.getNumber('number').value)
+      const s = c.getString('str')
+
+      c.getString('str') && console.log('str', c.getString('str'))
+      c.getInteger('int') && console.log('int', c.getInteger('int'))
+      c.getBoolean('bool') && console.log('bool', c.getBoolean('bool'))
+
+      c.getUser('user') && console.log('user', c.getUser('user'))
+      c.getMember('user') && console.log('member', c.getMember('user'))
+
+      c.getChannel('channel') && console.log('channel', c.getChannel('channel'))
+      c.getRole('role') && console.log('role', c.getRole('role'))
+      c.getMentionable('mentionable') && console.log('mentionable', c.getMentionable('mentionable'))
+      c.getNumber('number') && console.log('number', c.getNumber('number'))
+
+      c.getAttachment('attachment') && console.log('attachment', c.getAttachment('attachment'))
+
       return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
     },
   }),

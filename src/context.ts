@@ -27,6 +27,10 @@ import {
   APIInteractionDataOptionBase,
   APIApplicationCommandBasicOption,
   APIApplicationCommandOptionChoice,
+  APIUser,
+  APIInteractionDataResolvedChannel,
+  APIRole,
+  APIAttachment,
 } from 'discord-api-types/v10'
 import type {OptionToObject} from './types.ts'
 
@@ -46,70 +50,176 @@ export class ApplicationCommandContext<
   T extends APIApplicationCommandOption
 > {
   command: C = {} as any
-  /** Access to the original options */
-  options: OptionToObject<T>
-  constructor(readonly interaction: APIInteraction, command: C, options: OptionToObject<T>) {
+  constructor(readonly interaction: APIInteraction, command: C) {
     this.command = command
-    this.options = options || {}
   }
 
-  getOption<K extends keyof typeof this.options>(name: K): (typeof this.options)[K] {
-    return this.options[name]
-  }
-
-  /*   getString<K extends PickType<T, ApplicationCommandOptionType.String>['name']>(
-    name: K
-  ): T extends {name: K} ? T : never {
-    return this.options[name]
-  } */
+  /**
+   * Get `String`
+   */
   getString<K extends PickType<T, ApplicationCommandOptionType.String>['name']>(
     name: K
-  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.String, string>['value']> {
+  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.String, string>> {
     const interaction = this.interaction
-    if (
-      interaction.type === InteractionType.ApplicationCommand &&
-      interaction.data.type === ApplicationCommandType.ChatInput
-    ) {
-      for (const option of interaction.data.options ?? []) {
-        if (option.type === ApplicationCommandOptionType.String && option.name === name) {
-          return option.value
-        }
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.String && option.name === name) {
+        return option
+      }
+    }
+
+    return null!
+  }
+
+  /**
+   * Get `Integer` between -2^53 and 2^53
+   */
+  getInteger<K extends PickType<T, ApplicationCommandOptionType.Integer>['name']>(
+    name: K
+  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.Integer, number>> {
+    const interaction = this.interaction
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.Integer && option.name === name) {
+        return option
       }
     }
     return null!
   }
 
-  getInteger<K extends PickType<T, ApplicationCommandOptionType.Integer>['name']>(
+  /**
+   * Get `Boolean`
+   */
+  getBoolean<K extends PickType<T, ApplicationCommandOptionType.Boolean>['name']>(
     name: K
-  ): T extends {name: K} ? T : never {
-    return this.options[name]
+  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.Boolean, boolean>> {
+    const interaction = this.interaction
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.Boolean && option.name === name) {
+        return option
+      }
+    }
+    return null!
   }
 
-  getBoolean<K extends PickType<T, ApplicationCommandOptionType.Boolean>['name']>(name: K) {}
-  getUser<K extends PickType<T, ApplicationCommandOptionType.User>['name']>(
-    name: K
-  ): APIInteractionDataResolvedGuildMember | undefined {
+  /**
+   * Get `User`
+   */
+  getUser<K extends PickType<T, ApplicationCommandOptionType.User>['name']>(name: K): APIUser | undefined {
     const interaction = this.interaction
-    if (
-      interaction.type === InteractionType.ApplicationCommand &&
-      interaction.data.type === ApplicationCommandType.ChatInput
-    ) {
-      for (const option of interaction.data.options ?? []) {
-        if (option.type === ApplicationCommandOptionType.User) {
-          if (option.name === name) {
-            return interaction.data.resolved?.members?.[option.value]
-          }
-        }
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.User && option.name === name) {
+        return interaction.data.resolved?.users?.[option.value]
       }
     }
   }
-  getChannel<K extends PickType<T, ApplicationCommandOptionType.Channel>['name']>(name: K) {}
-  getRole<K extends PickType<T, ApplicationCommandOptionType.Role>['name']>(name: K) {}
-  getMentionable<K extends PickType<T, ApplicationCommandOptionType.Mentionable>['name']>(name: K) {}
-  getNumber<K extends PickType<T, ApplicationCommandOptionType.Number>['name']>(name: K) {
-    return {} as APIApplicationCommandInteractionDataNumberOption
+
+  /**
+   * Get Guild `Member` object
+   */
+  getMember<K extends PickType<T, ApplicationCommandOptionType.User>['name']>(
+    name: K
+  ): APIInteractionDataResolvedGuildMember | undefined {
+    const interaction = this.interaction
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.User && option.name === name) {
+        return interaction.data.resolved?.members?.[option.value]
+      }
+    }
   }
-  getAttachment<K extends PickType<T, ApplicationCommandOptionType.Attachment>['name']>(name: K) {}
+
+  /**
+   * Get `Channel`
+   */
+  getChannel<K extends PickType<T, ApplicationCommandOptionType.Channel>['name']>(
+    name: K
+  ): APIInteractionDataResolvedChannel | undefined {
+    const interaction = this.interaction
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.Channel && option.name === name) {
+        return interaction.data.resolved?.channels?.[option.value]
+      }
+    }
+  }
+
+  /**
+   * Get `Role`
+   */
+  getRole<K extends PickType<T, ApplicationCommandOptionType.Role>['name']>(name: K): APIRole | undefined {
+    const interaction = this.interaction
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.Role && option.name === name) {
+        return interaction.data.resolved?.roles?.[option.value]
+      }
+    }
+  }
+
+  /**
+   * Get `User` or `Role`
+   */
+  getMentionable<K extends PickType<T, ApplicationCommandOptionType.Mentionable>['name']>(
+    name: K
+  ): APIUser | APIRole | undefined {
+    const interaction = this.interaction
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.Mentionable && option.name === name) {
+        // TODO resolved[users or member] ???
+        return interaction.data.resolved?.users?.[option.value] ?? interaction.data.resolved?.roles?.[option.value]
+      }
+    }
+  }
+
+  /** Any double between -2^53 and 2^53 */
+  getNumber<K extends PickType<T, ApplicationCommandOptionType.Number>['name']>(
+    name: K
+  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.Number, number>> {
+    const interaction = this.interaction
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.Number && option.name === name) {
+        return option
+      }
+    }
+    return null!
+  }
+
+  getAttachment<K extends PickType<T, ApplicationCommandOptionType.Attachment>['name']>(
+    name: K
+  ): APIAttachment | undefined {
+    const interaction = this.interaction
+    if (interaction.type !== InteractionType.ApplicationCommand) return null!
+    if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
+
+    for (const option of interaction.data.options ?? []) {
+      if (option.type === ApplicationCommandOptionType.Attachment && option.name === name) {
+        return interaction.data.resolved?.attachments?.[option.value]
+      }
+    }
+  }
 
   /** Send a new message in response */
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
