@@ -24,9 +24,15 @@ export const commandOptionSchema = z
 
 const commandOptionSchemaRefine = (v: z.TypeOf<typeof commandOptionSchema>[]) => {
   const isContainsSubCommand = v.find((v) => ApplicationCommandOptionType.Subcommand === v.type)
-  const isContainsSubCommandGroup = v.find((v) => ApplicationCommandOptionType.SubcommandGroup === v.type)
+  const isContainsSubCommandGroup = v.find(
+    (v) => ApplicationCommandOptionType.SubcommandGroup === v.type
+  )
   const isContains = v.filter(
-    (v) => ![ApplicationCommandOptionType.Subcommand, ApplicationCommandOptionType.SubcommandGroup].includes(v.type)
+    (v) =>
+      ![
+        ApplicationCommandOptionType.Subcommand,
+        ApplicationCommandOptionType.SubcommandGroup,
+      ].includes(v.type)
   )
 
   if (isContains.length && isContainsSubCommand) return false

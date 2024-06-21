@@ -1,11 +1,11 @@
+import '@std/dotenv/load'
 import {Spinner} from 'https://deno.land/std/cli/spinner.ts'
-import 'https://deno.land/std/dotenv/load.ts'
 import {
   Locale,
-  RESTGetAPIApplicationCommandsResult,
-  RESTPostAPIApplicationCommandsJSONBody,
-  RESTPostAPIApplicationCommandsResult,
-  RESTPostOAuth2ClientCredentialsResult,
+  type RESTGetAPIApplicationCommandsResult,
+  type RESTPostAPIApplicationCommandsJSONBody,
+  type RESTPostAPIApplicationCommandsResult,
+  type RESTPostOAuth2ClientCredentialsResult,
 } from 'npm:discord-api-types/v10'
 
 export const clientId = Deno.env.get('CLIENT_ID')!
@@ -32,7 +32,10 @@ export const getToken = async () => {
   return token as RESTPostOAuth2ClientCredentialsResult
 }
 
-export const getApplicationsCommands = async (token: RESTPostOAuth2ClientCredentialsResult, guild?: string) => {
+export const getApplicationsCommands = async (
+  token: RESTPostOAuth2ClientCredentialsResult,
+  guild?: string
+) => {
   const res = await fetch(
     guild
       ? `https://discord.com/api/v10/applications/${clientId}/guilds/${guild}/commands`

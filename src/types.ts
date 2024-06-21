@@ -1,15 +1,14 @@
-import {
-  APIInteractionResponse,
-  RESTPostAPIChatInputApplicationCommandsJSONBody,
-  APIApplicationCommandOption,
+import type {
   APIApplicationCommandBasicOption,
-  APIApplicationCommandSubcommandOption,
+  APIApplicationCommandOption,
   APIApplicationCommandSubcommandGroupOption,
-  ApplicationCommandOptionType,
-  RESTPostAPIContextMenuApplicationCommandsJSONBody,
+  APIApplicationCommandSubcommandOption,
+  APIInteractionResponse,
   RESTPostAPIApplicationCommandsJSONBody,
+  RESTPostAPIChatInputApplicationCommandsJSONBody,
+  RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from 'discord-api-types/v10'
-import {
+import type {
   ApplicationCommandAutocompleteContext,
   ApplicationCommandContext,
   ContextMenuCommandContext,
@@ -18,7 +17,9 @@ import {
 } from './context.ts'
 
 /** `{} | {} => {} & {}` */
-export type UnionToIntersection<U> = (U extends any ? (arg: U) => void : never) extends (arg: infer R) => void
+export type UnionToIntersection<U> = (U extends any ? (arg: U) => void : never) extends (
+  arg: infer R
+) => void
   ? R
   : never
 
@@ -30,7 +31,9 @@ export type Unpack<T extends unknown[] | undefined> = T extends Array<infer O> ?
 
 export type EmptyArray<T> = T extends [] ? never : T
 
-type Autocomplete<T extends APIApplicationCommandOption> = T extends {autocomplete: true}
+type Autocomplete<T extends APIApplicationCommandOption> = T extends {
+  autocomplete: true
+}
   ? {
       autocomplete(
         c: ApplicationCommandAutocompleteContext<T>
@@ -38,7 +41,11 @@ type Autocomplete<T extends APIApplicationCommandOption> = T extends {autocomple
     }
   : never
 
-export type isRequiredOption<T extends APIApplicationCommandBasicOption> = T extends {required: true} ? T : T | null
+export type isRequiredOption<T extends APIApplicationCommandBasicOption> = T extends {
+  required: true
+}
+  ? T
+  : T | null
 
 export type OptionToObject<T extends APIApplicationCommandOption> = {
   [K in T['name']]: T extends {name: K} ? T : never
@@ -57,9 +64,13 @@ export type CommandHandler<
        * }
        * ```
        */
-      command(c: ApplicationCommandContext<T, O>): APIInteractionResponse | Promise<APIInteractionResponse>
+      command(
+        c: ApplicationCommandContext<T, O>
+      ): APIInteractionResponse | Promise<APIInteractionResponse>
 
-      messageComponent?(c: MessageComponentContext): APIInteractionResponse | Promise<APIInteractionResponse>
+      messageComponent?(
+        c: MessageComponentContext
+      ): APIInteractionResponse | Promise<APIInteractionResponse>
       /**
        * Handle `modal` submission
        *
@@ -108,9 +119,10 @@ export type CommandSchema<T extends RESTPostAPIChatInputApplicationCommandsJSONB
       : {[K in T['name']]: CommandHandler<T, never>}
     : {[K in T['name']]: CommandHandler<T, never>}
 
-export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> = {
-  [K in T['name']]: ContextMenuHandler<T>
-}
+export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> =
+  {
+    [K in T['name']]: ContextMenuHandler<T>
+  }
 
 export type Handler = CommandHandler<any, never> | ContextMenuHandler<any>
 

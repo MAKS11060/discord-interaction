@@ -18,7 +18,10 @@ export const importKeyRaw = (publicKey: string): Promise<CryptoKey> => {
  *
  * @returns {Response|null} Returns response with error
  */
-export const verifyRequestSignature = async (request: Request, key: CryptoKey): Promise<Response | null> => {
+export const verifyRequestSignature = async (
+  request: Request,
+  key: CryptoKey
+): Promise<Response | null> => {
   const signature = request.headers.get('X-Signature-Ed25519')
   const timestamp = request.headers.get('X-Signature-Timestamp')
   const body = new Uint8Array(await request.clone().arrayBuffer())

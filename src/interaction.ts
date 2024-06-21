@@ -1,16 +1,16 @@
+import {associateBy} from '@std/collections/associate-by'
 import {
-  type APIApplicationCommandOption,
-  type APIInteraction,
-  type APIInteractionResponse,
-  type APIMessageInteractionMetadata,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   InteractionResponseType,
   InteractionType,
   MessageFlags,
+  type APIApplicationCommandOption,
+  type APIInteraction,
+  type APIInteractionResponse,
+  type APIMessageInteractionMetadata,
   type RESTPostAPIApplicationCommandsJSONBody,
 } from 'discord-api-types/v10'
-import {verifyRequestSignature} from './lib/ed25519.ts'
 import {
   ApplicationCommandAutocompleteContext,
   ApplicationCommandContext,
@@ -18,9 +18,9 @@ import {
   MessageComponentContext,
   ModalContext,
 } from './context.ts'
-import {associateBy} from '@std/collections/associate-by'
-import type {Command, DefineHandler} from './types.ts'
+import {verifyRequestSignature} from './lib/ed25519.ts'
 import {commandSchema, userOrMessageCommandSchema} from './schema.ts'
+import type {Command, DefineHandler} from './types.ts'
 
 const unknownCommand = (text?: string): APIInteractionResponse => {
   return {
@@ -116,12 +116,15 @@ export const createHandler = async (commands: Command[]) => {
         const c = new ApplicationCommandContext(interaction, obj[interaction.data.name])
 
         if (!interaction.data.options) {
-          return obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+          return (
+            obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+          )
         } else {
           for (const option of interaction.data.options) {
             if (option.type === ApplicationCommandOptionType.Subcommand) {
               return (
-                obj[interaction.data.name][option.name]?.command(c) ?? unknownCommand('command handler is undefined')
+                obj[interaction.data.name][option.name]?.command(c) ??
+                unknownCommand('command handler is undefined')
               )
             }
 
@@ -137,7 +140,10 @@ export const createHandler = async (commands: Command[]) => {
             }
 
             if (obj[interaction.data.name]?.command) {
-              return obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+              return (
+                obj[interaction.data.name]?.command(c) ??
+                unknownCommand('command handler is undefined')
+              )
             }
           }
         }
@@ -145,12 +151,16 @@ export const createHandler = async (commands: Command[]) => {
 
       if (interaction.data.type === ApplicationCommandType.User) {
         const c = new ContextMenuCommandContext(obj[interaction.data.name])
-        return obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+        return (
+          obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+        )
       }
 
       if (interaction.data.type === ApplicationCommandType.Message) {
         const c = new ContextMenuCommandContext(obj[interaction.data.name])
-        return obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+        return (
+          obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+        )
       }
     }
 
@@ -178,7 +188,9 @@ export const createHandler = async (commands: Command[]) => {
         // }
 
         const handlers = keys.reduce((acc, key) => acc[key], obj) // obj[cmd][sub-group][sub]
-        return handlers?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
+        return (
+          handlers?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
+        )
       }
 
       return unknownCommand('messageComponent handler is undefined')
@@ -276,7 +288,10 @@ export const discordInteraction = async (
 const validateCommand = <T extends RESTPostAPIApplicationCommandsJSONBody>(command: T): T => {
   if (command.type === undefined || command.type === ApplicationCommandType.ChatInput) {
     return commandSchema.passthrough().parse(command) as unknown as T
-  } else if (command.type === ApplicationCommandType.Message || command.type === ApplicationCommandType.User) {
+  } else if (
+    command.type === ApplicationCommandType.Message ||
+    command.type === ApplicationCommandType.User
+  ) {
     return userOrMessageCommandSchema.passthrough().parse(command) as T
   }
   return commandSchema.passthrough().parse(command) as unknown as T

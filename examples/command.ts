@@ -5,8 +5,8 @@ import {
   ComponentType,
   TextInputStyle,
 } from 'discord-api-types/v10'
-import {defineCommand} from '../mod.ts'
 import {ulid} from 'jsr:@std/ulid'
+import {defineCommand} from '../mod.ts'
 
 const test1 = defineCommand({
   name: 'test1',
@@ -246,11 +246,10 @@ const test7 = defineCommand({
   test7: (o) => ({
     command: (c) => {
       const f = c.getString('format') // as (typeof o.format.choices)[number]['value']
-
-      if (f === 'ulid') {
+      if (f.value === 'ulid') {
         return c.reply({content: `ulid \`\`\`${ulid()}\`\`\``})
       }
-      if (f === 'uuid') {
+      if (f.value === 'uuid') {
         return c.reply({content: `uuid \`\`\`${crypto.randomUUID()}\`\`\``})
       }
 
@@ -263,51 +262,21 @@ const all = defineCommand({
   name: 'all',
   description: 'All',
   options: [
-    {
-      type: ApplicationCommandOptionType.String,
-      name: 'str',
-      description: 'Str',
-    },
-    {
-      type: ApplicationCommandOptionType.Integer,
-      name: 'int',
-      description: 'Int',
-    },
-    {
-      type: ApplicationCommandOptionType.Boolean,
-      name: 'bool',
-      description: 'Bool',
-    },
-    {
-      type: ApplicationCommandOptionType.User,
-      name: 'user',
-      description: 'User',
-    },
-    {
-      type: ApplicationCommandOptionType.Channel,
-      name: 'channel',
-      description: 'Channel',
-    },
-    {
-      type: ApplicationCommandOptionType.Role,
-      name: 'role',
-      description: 'Role',
-    },
+    {type: ApplicationCommandOptionType.String, name: 'str', description: 'Str'},
+    {type: ApplicationCommandOptionType.Integer, name: 'int', description: 'Int'},
+    {type: ApplicationCommandOptionType.Boolean, name: 'bool', description: 'Bool'},
+    {type: ApplicationCommandOptionType.User, name: 'user', description: 'User'},
+    {type: ApplicationCommandOptionType.Channel, name: 'channel', description: 'Channel'},
+    {type: ApplicationCommandOptionType.Role, name: 'role', description: 'Role'},
     {
       type: ApplicationCommandOptionType.Mentionable,
       name: 'mentionable',
       description: 'Mentionable',
     },
-    {
-      type: ApplicationCommandOptionType.Number,
-      name: 'number',
-      description: 'Number',
-    },
-    {
-      type: ApplicationCommandOptionType.Attachment,
-      name: 'attachment',
-      description: 'Attachment',
-    },
+    {type: ApplicationCommandOptionType.Number, name: 'number', description: 'Number'},
+    {type: ApplicationCommandOptionType.Attachment, name: 'attachment', description: 'Attachment'},
+
+    {type: ApplicationCommandOptionType.String, name: 'sr', description: 'String Required', required: true},
   ],
 }).createHandler({
   all: (opts) => ({
@@ -328,6 +297,8 @@ const all = defineCommand({
 
       c.getAttachment('attachment') && console.log('attachment', c.getAttachment('attachment'))
 
+      c.getString('sr')
+
       return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
     },
   }),
@@ -342,46 +313,18 @@ const all2 = defineCommand({
       name: 'sub',
       description: 'Sub',
       options: [
-        {
-          type: ApplicationCommandOptionType.String,
-          name: 'str',
-          description: 'Str',
-        },
-        {
-          type: ApplicationCommandOptionType.Integer,
-          name: 'int',
-          description: 'Int',
-        },
-        {
-          type: ApplicationCommandOptionType.Boolean,
-          name: 'bool',
-          description: 'Bool',
-        },
-        {
-          type: ApplicationCommandOptionType.User,
-          name: 'user',
-          description: 'User',
-        },
-        {
-          type: ApplicationCommandOptionType.Channel,
-          name: 'channel',
-          description: 'Channel',
-        },
-        {
-          type: ApplicationCommandOptionType.Role,
-          name: 'role',
-          description: 'Role',
-        },
+        {type: ApplicationCommandOptionType.String, name: 'str', description: 'Str'},
+        {type: ApplicationCommandOptionType.Integer, name: 'int', description: 'Int'},
+        {type: ApplicationCommandOptionType.Boolean, name: 'bool', description: 'Bool'},
+        {type: ApplicationCommandOptionType.User, name: 'user', description: 'User'},
+        {type: ApplicationCommandOptionType.Channel, name: 'channel', description: 'Channel'},
+        {type: ApplicationCommandOptionType.Role, name: 'role', description: 'Role'},
         {
           type: ApplicationCommandOptionType.Mentionable,
           name: 'mentionable',
           description: 'Mentionable',
         },
-        {
-          type: ApplicationCommandOptionType.Number,
-          name: 'number',
-          description: 'Number',
-        },
+        {type: ApplicationCommandOptionType.Number, name: 'number', description: 'Number'},
         {
           type: ApplicationCommandOptionType.Attachment,
           name: 'attachment',
@@ -394,7 +337,7 @@ const all2 = defineCommand({
   all2: {
     sub: () => ({
       command: (c) => {
-        console.log(c.getNumber('number').value)
+        console.log(c.getNumber('number')?.value)
 
         return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
       },

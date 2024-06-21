@@ -22,7 +22,20 @@
   },
   "exports": {
     ".": "./mod.ts",
-    "./hono": "./src/adapter/hono.ts"
+    "./hono": "./src/adapter/hono.ts",
+    // "./cli": "./scripts/cli.ts"
+  },
+  "publish": {
+    "include": [
+      "**/*.ts",
+      "README.md",
+      "LICENSE"
+    ],
+    "exclude": [
+      ".github",
+      "examples",
+      "**/*.test.ts",
+    ]
   },
   "unstable": [
     "kv"

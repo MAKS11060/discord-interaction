@@ -132,7 +132,10 @@ while (import.meta.main) {
         type: Checkbox,
         message: 'Select to deploy',
         name: 'deploy',
-        options: commands.map(({command}) => ({value: command, name: command.name})),
+        options: commands.map(({command}) => ({
+          value: command,
+          name: command.name,
+        })),
       },
     ])
 

@@ -1,41 +1,46 @@
 import {
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  InteractionResponseType,
+  InteractionType,
+  type APIApplicationCommandAutocompleteResponse,
+  type APIApplicationCommandOption,
+  type APIApplicationCommandOptionChoice,
+  type APIAttachment,
+  type APICommandAutocompleteInteractionResponseCallbackData,
+  type APIInteraction,
+  type APIInteractionDataOptionBase,
+  type APIInteractionDataResolvedChannel,
+  type APIInteractionDataResolvedGuildMember,
   type APIInteractionResponseCallbackData,
   type APIInteractionResponseChannelMessageWithSource,
-  InteractionResponseType,
-  type APIInteractionResponseUpdateMessage,
-  type APICommandAutocompleteInteractionResponseCallbackData,
-  type APIApplicationCommandAutocompleteResponse,
-  type APIInteractionResponseDeferredMessageUpdate,
   type APIInteractionResponseDeferredChannelMessageWithSource,
-  type APIModalInteractionResponseCallbackData,
+  type APIInteractionResponseDeferredMessageUpdate,
+  type APIInteractionResponseUpdateMessage,
   type APIModalInteractionResponse,
-  type APIApplicationCommandOption,
+  type APIModalInteractionResponseCallbackData,
+  type APIModalSubmission,
+  type APIRole,
+  type APIUser,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
-  ApplicationCommandOptionType,
   type RESTPostAPIContextMenuApplicationCommandsJSONBody,
   type RESTPostAPIInteractionCallbackJSONBody,
   type RESTPostAPIWebhookWithTokenResult,
-  type APIInteraction,
-  InteractionType,
-  ApplicationCommandType,
-  type APIInteractionDataResolvedGuildMember,
-  type APIModalSubmission,
-  type APIInteractionDataOptionBase,
-  type APIApplicationCommandOptionChoice,
-  type APIUser,
-  type APIInteractionDataResolvedChannel,
-  type APIRole,
-  type APIAttachment,
 } from 'discord-api-types/v10'
 
 /** Type guard for `APIApplicationCommandOption` */
-type PickType<T extends APIApplicationCommandOption, Type extends ApplicationCommandOptionType> = T extends T & {
+type PickType<
+  T extends APIApplicationCommandOption,
+  Type extends ApplicationCommandOptionType
+> = T extends T & {
   type: Type
 }
   ? T
   : never
 
-type isRequiredOption<T extends APIApplicationCommandOption, R> = T extends {required: true} ? R : R | null
+type isRequiredOption<T extends APIApplicationCommandOption, R> = T extends {required: true}
+  ? R
+  : R | null
 
 type extractChoices<T extends APIApplicationCommandOptionChoice> = T['name']
 
@@ -53,7 +58,10 @@ export class ApplicationCommandContext<
    */
   getString<K extends PickType<T, ApplicationCommandOptionType.String>['name']>(
     name: K
-  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.String, string>> {
+  ): isRequiredOption<
+    T,
+    APIInteractionDataOptionBase<ApplicationCommandOptionType.String, string>
+  > {
     const interaction = this.interaction
     if (interaction.type !== InteractionType.ApplicationCommand) return null!
     if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
@@ -72,7 +80,10 @@ export class ApplicationCommandContext<
    */
   getInteger<K extends PickType<T, ApplicationCommandOptionType.Integer>['name']>(
     name: K
-  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.Integer, number>> {
+  ): isRequiredOption<
+    T,
+    APIInteractionDataOptionBase<ApplicationCommandOptionType.Integer, number>
+  > {
     const interaction = this.interaction
     if (interaction.type !== InteractionType.ApplicationCommand) return null!
     if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
@@ -90,7 +101,10 @@ export class ApplicationCommandContext<
    */
   getBoolean<K extends PickType<T, ApplicationCommandOptionType.Boolean>['name']>(
     name: K
-  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.Boolean, boolean>> {
+  ): isRequiredOption<
+    T,
+    APIInteractionDataOptionBase<ApplicationCommandOptionType.Boolean, boolean>
+  > {
     const interaction = this.interaction
     if (interaction.type !== InteractionType.ApplicationCommand) return null!
     if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
@@ -106,7 +120,9 @@ export class ApplicationCommandContext<
   /**
    * Get `User`
    */
-  getUser<K extends PickType<T, ApplicationCommandOptionType.User>['name']>(name: K): APIUser | undefined {
+  getUser<K extends PickType<T, ApplicationCommandOptionType.User>['name']>(
+    name: K
+  ): APIUser | undefined {
     const interaction = this.interaction
     if (interaction.type !== InteractionType.ApplicationCommand) return null!
     if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
@@ -155,7 +171,9 @@ export class ApplicationCommandContext<
   /**
    * Get `Role`
    */
-  getRole<K extends PickType<T, ApplicationCommandOptionType.Role>['name']>(name: K): APIRole | undefined {
+  getRole<K extends PickType<T, ApplicationCommandOptionType.Role>['name']>(
+    name: K
+  ): APIRole | undefined {
     const interaction = this.interaction
     if (interaction.type !== InteractionType.ApplicationCommand) return null!
     if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
@@ -180,7 +198,10 @@ export class ApplicationCommandContext<
     for (const option of interaction.data.options ?? []) {
       if (option.type === ApplicationCommandOptionType.Mentionable && option.name === name) {
         // TODO resolved[users or member] ???
-        return interaction.data.resolved?.users?.[option.value] ?? interaction.data.resolved?.roles?.[option.value]
+        return (
+          interaction.data.resolved?.users?.[option.value] ??
+          interaction.data.resolved?.roles?.[option.value]
+        )
       }
     }
   }
@@ -188,7 +209,10 @@ export class ApplicationCommandContext<
   /** Any double between -2^53 and 2^53 */
   getNumber<K extends PickType<T, ApplicationCommandOptionType.Number>['name']>(
     name: K
-  ): isRequiredOption<T, APIInteractionDataOptionBase<ApplicationCommandOptionType.Number, number>> {
+  ): isRequiredOption<
+    T,
+    APIInteractionDataOptionBase<ApplicationCommandOptionType.Number, number>
+  > {
     const interaction = this.interaction
     if (interaction.type !== InteractionType.ApplicationCommand) return null!
     if (interaction.data.type !== ApplicationCommandType.ChatInput) return null!
@@ -266,7 +290,9 @@ export class ApplicationCommandAutocompleteContext<T extends APIApplicationComma
 
   getOption() {}
 
-  autocomplete(data: APICommandAutocompleteInteractionResponseCallbackData): APIApplicationCommandAutocompleteResponse {
+  autocomplete(
+    data: APICommandAutocompleteInteractionResponseCallbackData
+  ): APIApplicationCommandAutocompleteResponse {
     return {
       type: InteractionResponseType.ApplicationCommandAutocompleteResult,
       data,
@@ -324,7 +350,9 @@ export class ModalContext {
   }
 }
 
-export class ContextMenuCommandContext<C extends RESTPostAPIContextMenuApplicationCommandsJSONBody> {
+export class ContextMenuCommandContext<
+  C extends RESTPostAPIContextMenuApplicationCommandsJSONBody
+> {
   command: C = {} as any
   constructor(command: C) {
     this.command = command
@@ -354,10 +382,13 @@ const createDeferredResponse = () => {
       data: {},
     } satisfies RESTPostAPIInteractionCallbackJSONBody
 
-    const res = await fetch(`https://discord.com/api/v10/interactions/{interaction.id}/{interaction.token}/callback`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    })
+    const res = await fetch(
+      `https://discord.com/api/v10/interactions/{interaction.id}/{interaction.token}/callback`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }
+    )
 
     return res.ok ? ((await res.json()) as RESTPostAPIWebhookWithTokenResult) : await res.json()
   }

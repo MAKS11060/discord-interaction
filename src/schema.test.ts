@@ -31,7 +31,10 @@ command
     subcommand-group
 */
 
-import {ApplicationCommandOptionType, type RESTPostAPIChatInputApplicationCommandsJSONBody} from 'discord-api-types/v10'
+import {
+  ApplicationCommandOptionType,
+  type RESTPostAPIChatInputApplicationCommandsJSONBody,
+} from 'discord-api-types/v10'
 import {commandSchema} from './schema.ts'
 
 Deno.test('case 1', () => {
@@ -39,8 +42,16 @@ Deno.test('case 1', () => {
     name: 'test',
     description: 'test',
     options: [
-      {type: ApplicationCommandOptionType.Subcommand, name: 'sub1', description: 'test'},
-      {type: ApplicationCommandOptionType.Subcommand, name: 'sub2', description: 'test'},
+      {
+        type: ApplicationCommandOptionType.Subcommand,
+        name: 'sub1',
+        description: 'test',
+      },
+      {
+        type: ApplicationCommandOptionType.Subcommand,
+        name: 'sub2',
+        description: 'test',
+      },
     ],
   } satisfies RESTPostAPIChatInputApplicationCommandsJSONBody)
 })
@@ -55,8 +66,16 @@ Deno.test('case 2', () => {
         name: 'sub1',
         description: 'test',
         options: [
-          {type: ApplicationCommandOptionType.Subcommand, name: 'sub1', description: 'test'},
-          {type: ApplicationCommandOptionType.Subcommand, name: 'sub2', description: 'test'},
+          {
+            type: ApplicationCommandOptionType.Subcommand,
+            name: 'sub1',
+            description: 'test',
+          },
+          {
+            type: ApplicationCommandOptionType.Subcommand,
+            name: 'sub2',
+            description: 'test',
+          },
         ],
       },
       {
@@ -64,8 +83,16 @@ Deno.test('case 2', () => {
         name: 'sub1',
         description: 'test',
         options: [
-          {type: ApplicationCommandOptionType.Subcommand, name: 'sub1', description: 'test'},
-          {type: ApplicationCommandOptionType.Subcommand, name: 'sub2', description: 'test'},
+          {
+            type: ApplicationCommandOptionType.Subcommand,
+            name: 'sub1',
+            description: 'test',
+          },
+          {
+            type: ApplicationCommandOptionType.Subcommand,
+            name: 'sub2',
+            description: 'test',
+          },
         ],
       },
     ],
@@ -82,11 +109,23 @@ Deno.test('case 3', () => {
         name: 'sub1',
         description: 'test',
         options: [
-          {type: ApplicationCommandOptionType.Subcommand, name: 'sub1', description: 'test'},
-          {type: ApplicationCommandOptionType.Subcommand, name: 'sub2', description: 'test'},
+          {
+            type: ApplicationCommandOptionType.Subcommand,
+            name: 'sub1',
+            description: 'test',
+          },
+          {
+            type: ApplicationCommandOptionType.Subcommand,
+            name: 'sub2',
+            description: 'test',
+          },
         ],
       },
-      {type: ApplicationCommandOptionType.Subcommand, name: 'sub2', description: 'test'},
+      {
+        type: ApplicationCommandOptionType.Subcommand,
+        name: 'sub2',
+        description: 'test',
+      },
     ],
   } satisfies RESTPostAPIChatInputApplicationCommandsJSONBody)
 })

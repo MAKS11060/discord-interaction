@@ -1,11 +1,15 @@
 #!/usr/bin/env -S deno run -A --watch
 import '@std/dotenv/load'
 
+import {
+  InteractionType,
+  type APIInteraction,
+  type APIInteractionResponse,
+} from 'discord-api-types/v10'
 import {Hono} from 'hono'
-import {type APIInteraction, type APIInteractionResponse, InteractionType} from 'discord-api-types/v10'
-import {commands} from './examples/command.ts'
-import {importKeyRaw, discordInteraction} from './src/adapter/hono.ts'
 import {loggerBody} from 'https://raw.githubusercontent.com/MAKS11060/deno-libs/main/hono/loggerBody.ts'
+import {discordInteraction, importKeyRaw} from '../src/adapter/hono.ts'
+import {commands} from './command.ts'
 
 const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
 const app = new Hono().post(

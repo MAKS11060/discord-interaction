@@ -31,8 +31,10 @@
  *   }
  *   return new Response('404 Not found', {status: 404})
  * })
+
  * ```
  */
 
+export {defineCommand, discordInteraction} from './src/interaction.ts'
 export {importKeyRaw} from './src/lib/ed25519.ts'
-export {discordInteraction, defineCommand} from './src/interaction.ts'
+
