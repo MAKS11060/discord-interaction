@@ -45,33 +45,6 @@ type isRequiredOption<T extends APIApplicationCommandOption, R> = T extends {req
 
 // type extractChoices<T extends APIApplicationCommandOptionChoice> = T['name']
 
-/////////////////////////////////////
-// class Test<T extends APIApplicationCommandOption> {
-//   c: T = {} as any
-
-//   getString<K extends PickType<T, ApplicationCommandOptionType.String>['name']>(
-//     name: K
-//   ): isRequiredOption<
-//     T extends {name: K} ? T : never,
-//     // T,
-//     APIInteractionDataOptionBase<ApplicationCommandOptionType.String, string>
-//   > {
-//     return null!
-//   }
-// }
-
-// const test = new Test<
-//   | {type: ApplicationCommandOptionType.String; name: 'sr'; description: 'r'; required: true}
-//   | {type: ApplicationCommandOptionType.String; name: 'str'; description: 'Str'}
-//   | {type: ApplicationCommandOptionType.String; name: 'strsd'; description: 'Str', required: true}
-// >()
-// test.getString('sr').value
-// test.getString('sr')?.value
-/////////////////////////////////////
-
-const a: APIApplicationCommandInteractionDataBasicOption = {}
-/////////////////////////////////////
-
 export class ApplicationCommandContext<
   C extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandOption,
   O extends APIApplicationCommandOption
@@ -83,7 +56,7 @@ export class ApplicationCommandContext<
     readonly options: OptionToObject<O>,
     readonly payload: Record<string, APIApplicationCommandInteractionDataBasicOption>
   ) {
-    console.log({options, payload})
+    // console.log({options, payload})
   }
 
   /**

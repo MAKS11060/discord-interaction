@@ -5,6 +5,7 @@ import {
   InteractionResponseType,
   InteractionType,
   MessageFlags,
+  type APIApplicationCommandInteractionDataBasicOption,
   type APIApplicationCommandOption,
   type APIInteraction,
   type APIInteractionResponse,
@@ -60,7 +61,7 @@ const commandToAct = (command: RESTPostAPIApplicationCommandsJSONBody) => {
       }
     }
   }
-  // console.log(out)
+
   return out
 }
 
@@ -121,7 +122,7 @@ export const createHandler = async (commands: Command[]) => {
           const c = new ApplicationCommandContext(
             interaction,
             commandsTree[interaction.data.name],
-            null
+            {}
           )
           return (
             executionTree[interaction.data.name]?.command(c) ??
@@ -162,7 +163,11 @@ export const createHandler = async (commands: Command[]) => {
               const c = new ApplicationCommandContext(
                 interaction,
                 commandsTree[interaction.data.name],
-                associateBy(interaction.data.options ?? [], (el) => el.name)
+                associateBy(
+                  (interaction.data.options as APIApplicationCommandInteractionDataBasicOption[]) ??
+                    [],
+                  (el) => el.name
+                )
               )
               return (
                 executionTree[interaction.data.name]?.command(c) ??
