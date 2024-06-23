@@ -262,7 +262,9 @@ const all = defineCommand({
   name: 'all',
   description: 'All',
   options: [
+    {type: ApplicationCommandOptionType.String, name: 'sr', description: 'r', required: true},
     {type: ApplicationCommandOptionType.String, name: 'str', description: 'Str'},
+
     {type: ApplicationCommandOptionType.Integer, name: 'int', description: 'Int'},
     {type: ApplicationCommandOptionType.Boolean, name: 'bool', description: 'Bool'},
     {type: ApplicationCommandOptionType.User, name: 'user', description: 'User'},
@@ -275,15 +277,13 @@ const all = defineCommand({
     },
     {type: ApplicationCommandOptionType.Number, name: 'number', description: 'Number'},
     {type: ApplicationCommandOptionType.Attachment, name: 'attachment', description: 'Attachment'},
-
-    {type: ApplicationCommandOptionType.String, name: 'sr', description: 'String Required', required: true},
   ],
 }).createHandler({
   all: (opts) => ({
     command: (c) => {
-      const s = c.getString('str')
-
       c.getString('str') && console.log('str', c.getString('str'))
+      c.getString('sr').value
+
       c.getInteger('int') && console.log('int', c.getInteger('int'))
       c.getBoolean('bool') && console.log('bool', c.getBoolean('bool'))
 
@@ -296,8 +296,6 @@ const all = defineCommand({
       c.getNumber('number') && console.log('number', c.getNumber('number'))
 
       c.getAttachment('attachment') && console.log('attachment', c.getAttachment('attachment'))
-
-      c.getString('sr')
 
       return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
     },
@@ -313,7 +311,9 @@ const all2 = defineCommand({
       name: 'sub',
       description: 'Sub',
       options: [
+        {type: ApplicationCommandOptionType.String, name: 'sr', description: 'r', required: true},
         {type: ApplicationCommandOptionType.String, name: 'str', description: 'Str'},
+
         {type: ApplicationCommandOptionType.Integer, name: 'int', description: 'Int'},
         {type: ApplicationCommandOptionType.Boolean, name: 'bool', description: 'Bool'},
         {type: ApplicationCommandOptionType.User, name: 'user', description: 'User'},
@@ -337,7 +337,7 @@ const all2 = defineCommand({
   all2: {
     sub: () => ({
       command: (c) => {
-        console.log(c.getNumber('number')?.value)
+        console.log(c.getString('sr'))
 
         return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
       },

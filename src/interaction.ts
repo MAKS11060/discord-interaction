@@ -65,33 +65,37 @@ const commandToAct = (command: RESTPostAPIApplicationCommandsJSONBody) => {
 }
 
 const commandsInit = async (init: Command[]) => {
-  const out: Record<string, any> = {}
+  const executionTree: Record<string, any> = {}
+  const commandsTree: Record<string, any> = {}
 
   for (const {command, handler} of init) {
     const cAct = commandToAct(command) // to pretty obj
     // console.log(cAct)
+    for (const key in cAct) {
+      commandsTree[key] = cAct[key]
+    }
 
     for (const key in handler) {
       const l0 = handler[key]
       if (typeof l0 === 'function') {
         // out[key] = await l0()
-        out[key] = await l0(cAct[key])
+        executionTree[key] = await l0(cAct[key])
       }
       if (typeof l0 === 'object') {
-        out[key] ??= {}
+        executionTree[key] ??= {}
         for (const key2 in l0) {
           const l1 = l0[key2]
           if (typeof l1 === 'function') {
             // out[key][key2] = await l1()
-            out[key][key2] = await l1(cAct[key][key2])
+            executionTree[key][key2] = await l1(cAct[key][key2])
           }
           if (typeof l1 === 'object') {
-            out[key][key2] ??= {}
+            executionTree[key][key2] ??= {}
             for (const key3 in l1) {
               const l2 = l1[key3]
               if (typeof l2 === 'function') {
                 // out[key][key2][key3] = await l2()
-                out[key][key2][key3] = await l2(cAct[key][key2][key3])
+                executionTree[key][key2][key3] = await l2(cAct[key][key2][key3])
               }
             }
           }
@@ -100,11 +104,11 @@ const commandsInit = async (init: Command[]) => {
     }
   }
 
-  return out
+  return {executionTree, commandsTree}
 }
 
 export const createHandler = async (commands: Command[]) => {
-  const obj = (await commandsInit(commands)) as any
+  const {executionTree, commandsTree} = await commandsInit(commands)
 
   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
     if (interaction.type === InteractionType.Ping) {
@@ -113,17 +117,26 @@ export const createHandler = async (commands: Command[]) => {
 
     if (interaction.type === InteractionType.ApplicationCommand) {
       if (interaction.data.type === ApplicationCommandType.ChatInput) {
-        const c = new ApplicationCommandContext(interaction, obj[interaction.data.name])
-
         if (!interaction.data.options) {
+          const c = new ApplicationCommandContext(
+            interaction,
+            commandsTree[interaction.data.name],
+            null
+          )
           return (
-            obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+            executionTree[interaction.data.name]?.command(c) ??
+            unknownCommand('command handler is undefined')
           )
         } else {
           for (const option of interaction.data.options) {
             if (option.type === ApplicationCommandOptionType.Subcommand) {
+              const c = new ApplicationCommandContext(
+                interaction,
+                commandsTree[interaction.data.name][option.name],
+                associateBy(option.options ?? [], (el) => el.name)
+              )
               return (
-                obj[interaction.data.name][option.name]?.command(c) ??
+                executionTree[interaction.data.name][option.name]?.command(c) ??
                 unknownCommand('command handler is undefined')
               )
             }
@@ -131,17 +144,28 @@ export const createHandler = async (commands: Command[]) => {
             if (option.type === ApplicationCommandOptionType.SubcommandGroup) {
               for (const subOption of option.options) {
                 if (subOption.type === ApplicationCommandOptionType.Subcommand) {
+                  const c = new ApplicationCommandContext(
+                    interaction,
+                    commandsTree[interaction.data.name][option.name][subOption.name],
+
+                    associateBy(subOption.options ?? [], (el) => el.name)
+                  )
                   return (
-                    obj[interaction.data.name][option.name][subOption.name]?.command(c) ??
+                    executionTree[interaction.data.name][option.name][subOption.name]?.command(c) ??
                     unknownCommand('command handler is undefined')
                   )
                 }
               }
             }
 
-            if (obj[interaction.data.name]?.command) {
+            if (executionTree[interaction.data.name]?.command) {
+              const c = new ApplicationCommandContext(
+                interaction,
+                commandsTree[interaction.data.name],
+                associateBy(interaction.data.options ?? [], (el) => el.name)
+              )
               return (
-                obj[interaction.data.name]?.command(c) ??
+                executionTree[interaction.data.name]?.command(c) ??
                 unknownCommand('command handler is undefined')
               )
             }
@@ -150,16 +174,18 @@ export const createHandler = async (commands: Command[]) => {
       }
 
       if (interaction.data.type === ApplicationCommandType.User) {
-        const c = new ContextMenuCommandContext(obj[interaction.data.name])
+        const c = new ContextMenuCommandContext(executionTree[interaction.data.name])
         return (
-          obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+          executionTree[interaction.data.name]?.command(c) ??
+          unknownCommand('command handler is undefined')
         )
       }
 
       if (interaction.data.type === ApplicationCommandType.Message) {
-        const c = new ContextMenuCommandContext(obj[interaction.data.name])
+        const c = new ContextMenuCommandContext(executionTree[interaction.data.name])
         return (
-          obj[interaction.data.name]?.command(c) ?? unknownCommand('command handler is undefined')
+          executionTree[interaction.data.name]?.command(c) ??
+          unknownCommand('command handler is undefined')
         )
       }
     }
@@ -175,19 +201,7 @@ export const createHandler = async (commands: Command[]) => {
         if (!name) return unknownCommand('Message Component interaction_metadata.name is undefined')
         const keys = name.split(' ', 3) // 'cmd sub-group sub'
 
-        // find path
-        // if (keys.length === 1) {
-        //   return obj[keys[0]]?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
-        // } else if (keys.length === 2) {
-        //   return obj[keys[0]][keys[1]]?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
-        // } else if (keys.length === 3) {
-        //   return (
-        //     obj[keys[0]][keys[1]][keys[2]]?.messageComponent(c) ??
-        //     unknownCommand('messageComponent handler is undefined')
-        //   )
-        // }
-
-        const handlers = keys.reduce((acc, key) => acc[key], obj) // obj[cmd][sub-group][sub]
+        const handlers = keys.reduce((acc, key) => acc[key], executionTree) // obj[cmd][sub-group][sub]
         return (
           handlers?.messageComponent(c) ?? unknownCommand('messageComponent handler is undefined')
         )
@@ -213,14 +227,14 @@ export const createHandler = async (commands: Command[]) => {
         if (!name) return unknownCommand('Message Component interaction_metadata.name is undefined')
         const keys = name.split(' ', 3) // 'cmd sub-group sub'
 
-        const handlers = keys.reduce((acc, key) => acc[key], obj) // obj[cmd][sub-group][sub]
+        const handlers = keys.reduce((acc, key) => acc[key], executionTree) // obj[cmd][sub-group][sub]
         return handlers?.modalSubmit(c) ?? unknownCommand('modalSubmit handler is undefined')
       }
 
       // best solution so far
       // fire all modalSubmit handler. if use ApplicationCommandContext.modal()
-      for (const key1 in obj) {
-        const l1 = obj[key1]
+      for (const key1 in executionTree) {
+        const l1 = executionTree[key1]
         if (l1?.modalSubmit) {
           const res = await l1.modalSubmit(c)
           if (res) return res
