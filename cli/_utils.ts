@@ -2,7 +2,7 @@ import {Spinner} from '@std/cli/spinner'
 import '@std/dotenv/load'
 import {
   Locale,
-  RESTGetAPIOAuth2CurrentAuthorizationResult,
+  type RESTGetAPIOAuth2CurrentAuthorizationResult,
   type RESTGetAPIApplicationCommandsResult,
   type RESTPostAPIApplicationCommandsJSONBody,
   type RESTPostAPIApplicationCommandsResult,
