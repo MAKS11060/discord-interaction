@@ -34,7 +34,7 @@
     "exclude": [
       ".github",
       "examples",
-      "**/*.test.ts",
+      "**/*.test.ts"
     ]
   },
   "unstable": [

@@ -21,14 +21,14 @@
  * ```
  */
 
-import {parseArgs} from '@std/cli/parse-args'
-import {resolve} from '@std/path/resolve'
-import {toFileUrl} from '@std/path/to-file-url'
 import type {
   RESTError,
   RESTOAuth2ImplicitAuthorizationURLFragmentResult,
 } from 'discord-api-types/v10'
 import {Checkbox, Select, prompt} from 'jsr:@cliffy/prompt@1.0.0-rc.5'
+import {parseArgs} from 'jsr:@std/cli/parse-args'
+import {resolve} from 'jsr:@std/path/resolve'
+import {toFileUrl} from 'jsr:@std/path/to-file-url'
 import type {Command} from '../src/types.ts'
 import {
   clientId,
