@@ -94,12 +94,13 @@ console.log(`load: %c${commandsPath}`, 'color: green;')
 
 const commands: Command[] = await import(toFileUrl(commandsPath).toString())
   .then((r) => {
-    return [...r?.defaults ?? [], ...r?.commands ?? []]
+    return [...r?.default ?? [], ...r?.commands ?? []]
   })
   .catch((e) => {
     console.error('invalid commands in file')
     Deno.exit(1)
   })
+
 
 if (args.verbose) console.log('commands:', commands)
 

@@ -346,3 +346,19 @@ const all2 = defineCommand({
 })
 
 export const commands = [test1, test2, test3, test4, test5, all, all2, test7]
+
+const call = defineCommand({
+  name: 'Call',
+  type: 2
+}).createHandler({
+  Call: () => {
+    return {
+      command(c) {
+        return c.reply({
+          content: '13',
+        })
+      },
+    }
+  },
+})
+// export default [call]
