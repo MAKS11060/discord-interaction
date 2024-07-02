@@ -5,7 +5,7 @@
   "tasks": {
     "dev": "deno run -A --unstable-hmr examples/main.ts",
     "devr": "deno run -Ar --unstable-hmr examples/main.ts",
-    "ci": "deno task publish-dry-run && deno task test",
+    "ci": "deno task publish-dry-run --allow-dirty && deno task test",
     "test": "deno test -A",
     "publish-dry-run": "deno publish --dry-run"
   },

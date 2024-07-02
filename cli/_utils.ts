@@ -2,11 +2,12 @@ import {Spinner} from '@std/cli/spinner'
 import '@std/dotenv/load'
 import {
   Locale,
+  RESTGetAPIOAuth2CurrentAuthorizationResult,
   type RESTGetAPIApplicationCommandsResult,
   type RESTPostAPIApplicationCommandsJSONBody,
   type RESTPostAPIApplicationCommandsResult,
   type RESTPostOAuth2ClientCredentialsResult,
-} from 'npm:discord-api-types/v10'
+} from 'discord-api-types/v10'
 
 export const clientId = Deno.env.get('CLIENT_ID')!
 const clientSecret = Deno.env.get('CLIENT_SECRET')!
@@ -30,6 +31,17 @@ export const getToken = async () => {
 
   waitToken.stop()
   return token as RESTPostOAuth2ClientCredentialsResult
+}
+
+export const getMe = async (cred: RESTPostOAuth2ClientCredentialsResult) => {
+  const res = await fetch('https://discord.com/api/oauth2/@me', {
+    headers: {
+      Authorization: `Bearer ${cred.access_token}`,
+    },
+  })
+
+  if (!res.ok) throw await res.text()
+  return (await res.json()) as RESTGetAPIOAuth2CurrentAuthorizationResult
 }
 
 export const getApplicationsCommands = async (

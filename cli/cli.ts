@@ -1,27 +1,55 @@
 #!/usr/bin/env -S deno run -A
 
-import {parseArgs} from '@std/cli'
-import {resolve, toFileUrl} from '@std/path'
-import type {RESTOAuth2ImplicitAuthorizationURLFragmentResult} from 'discord-api-types/v10'
-import {Checkbox, Select, prompt} from 'https://deno.land/x/cliffy/prompt/mod.ts'
+/**
+ * @module
+ *
+ * Deno-based interactive CLI for deploying commands to Discord.
+ *
+ * @example Install global cli
+ * ```bash
+ * deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interaction/cli
+ * ```
+ *
+ * @example Run directly
+ * ```bash
+ * deno run -A jsr:@maks11060/discord-interaction/cli
+ * ```
+ *
+ * @example Usage
+ * ```bash
+ * deploy-discord -h
+ * ```
+ */
+
+import {parseArgs} from '@std/cli/parse-args'
+import {resolve} from '@std/path/resolve'
+import {toFileUrl} from '@std/path/to-file-url'
+import type {
+  RESTError,
+  RESTOAuth2ImplicitAuthorizationURLFragmentResult,
+} from 'discord-api-types/v10'
+import {Checkbox, Select, prompt} from 'jsr:@cliffy/prompt@1.0.0-rc.5'
+import type {Command} from '../src/types.ts'
 import {
   clientId,
   deleteApplicationsCommands,
   getApplicationsCommands,
+  getMe,
   getToken,
   postApplicationsCommands,
 } from './_utils.ts'
 
 if (!import.meta.main) {
-  throw new Error('This is not a module. Run directly')
+  throw new Error('This is not a module. Run directly on Deno')
 }
 
 const args = parseArgs(Deno.args, {
   string: ['i', 'guild'],
-  boolean: ['h', 'help'],
+  boolean: ['h', 'help', 'verbose'],
   alias: {
     h: 'help',
     i: 'guild',
+    v: 'verbose',
   },
 })
 // console.log(args)
@@ -61,9 +89,9 @@ if (args.help || !args._.length) {
 }
 
 const commandsPath = resolve(Deno.cwd(), args._[0].toString()).toString()
-console.log(`load: ${commandsPath}`)
+console.log(`load: %c${commandsPath}`, 'color: green;')
 
-const commands = await import(toFileUrl(commandsPath).toString())
+const commands: Command[] = await import(toFileUrl(commandsPath).toString())
   .then((r) => {
     return r.commands
   })
@@ -72,12 +100,14 @@ const commands = await import(toFileUrl(commandsPath).toString())
     Deno.exit(1)
   })
 
+// if (args.verbose) console.log('commands:', commands)
+
 const kv = await Deno.openKv()
 
 const authorize = async () => {
   if (!(await kv.get(['token', clientId])).versionstamp) {
     const token = await getToken() // authorize
-    console.log('authorize', clientId)
+    // console.log(`authorize: %c${clientId}`, 'color: blue;')
     await kv.set(['token', clientId], token, {
       expireIn: token.expires_in * 1000,
     })
@@ -92,8 +122,13 @@ const authorize = async () => {
 const token = await authorize()
 if (!token) {
   await kv.delete(['token', clientId])
-  throw new Error('not authorized. restart cli')
+  throw new Error('Not authorized. restart CLI')
 }
+
+const me = await getMe(token)
+if (args.verbose) console.log('authorize', me)
+else
+  console.log(`authorize: %c${clientId} %c${me.application.name}`, 'color: green;', 'color: blue')
 
 while (import.meta.main) {
   const select = await prompt([
@@ -144,9 +179,12 @@ while (import.meta.main) {
     ])
 
     for (const item of (deploy as any[]) || []) {
-      const {errors, ...deploy} = await postApplicationsCommands(token, item, args?.guild)
-      if (!errors) console.log(`Deploy: %c${deploy.id} ${item.name}`, 'color: green')
-      else console.error(`Deploy: ${item.name}`, JSON.stringify(errors, null, 2))
+      const deploy = await postApplicationsCommands(token, item, args?.guild)
+
+      if ((deploy as unknown as RESTError).errors)
+        console.error(`Deploy: ${item.name}`, JSON.stringify(deploy, null, 2))
+
+      console.log(`Deploy: %c${deploy.id} ${item.name}`, 'color: green')
     }
   }
 
