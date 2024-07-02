@@ -33,9 +33,11 @@ command
 
 import {
   ApplicationCommandOptionType,
+  ApplicationCommandType,
+  RESTPostAPIContextMenuApplicationCommandsJSONBody,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from 'discord-api-types/v10'
-import {commandSchema} from './schema.ts'
+import {commandSchema, userOrMessageCommandSchema} from './schema.ts'
 
 Deno.test('case 1', () => {
   commandSchema.parse({
@@ -136,4 +138,11 @@ Deno.test('case 4', () => {
 
 Deno.test('case 5', () => {
   /* typescript guaranteed this case */
+})
+
+Deno.test('userOrMessage command name', () => {
+  userOrMessageCommandSchema.parse({
+    type: ApplicationCommandType.User,
+    name: 'Test Cmd',
+  } satisfies RESTPostAPIContextMenuApplicationCommandsJSONBody)
 })

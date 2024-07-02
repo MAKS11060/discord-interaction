@@ -89,7 +89,11 @@ export const commandSchema = z
 
 export const userOrMessageCommandSchema = commandSchema.omit({
   description: true,
+  name_localizations: true,
   options: true,
+  name: true
+}).extend({
+  name: commandName
 })
 
 export const commandsScheme = z.array(commandSchema).max(100)

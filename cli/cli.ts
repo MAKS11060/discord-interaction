@@ -84,6 +84,7 @@ if (args.help || !args._.length) {
   printOptions([
     {arg: '-i, --guild', description: 'Guild id for deploy commands'},
     {arg: '-h, --help', description: 'Print help'},
+    {arg: '-v, --verbose', description: 'Show more logs'},
   ])
   Deno.exit(0)
 }
@@ -93,14 +94,14 @@ console.log(`load: %c${commandsPath}`, 'color: green;')
 
 const commands: Command[] = await import(toFileUrl(commandsPath).toString())
   .then((r) => {
-    return r.commands
+    return [...r?.defaults ?? [], ...r?.commands ?? []]
   })
   .catch((e) => {
-    console.error('invalid commands file')
+    console.error('invalid commands in file')
     Deno.exit(1)
   })
 
-// if (args.verbose) console.log('commands:', commands)
+if (args.verbose) console.log('commands:', commands)
 
 const kv = await Deno.openKv()
 

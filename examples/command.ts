@@ -183,9 +183,9 @@ const test3 = defineCommand({
 
 const test4 = defineCommand({
   type: ApplicationCommandType.User,
-  name: 'test4',
+  name: 'test4 s',
 }).createHandler({
-  test4: () => ({
+  'test4 s': () => ({
     command: (c) => c.reply({content: '1'}),
   }),
 })
