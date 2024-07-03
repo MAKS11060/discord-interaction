@@ -5,7 +5,7 @@
  *
  * Deno-based interactive CLI for deploying commands to Discord.
  *
- * @example Install global cli
+ * @example Install cli
  * ```bash
  * deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interaction/cli
  * ```
@@ -26,6 +26,7 @@ import {resolve} from '@std/path/resolve'
 import {toFileUrl} from '@std/path/to-file-url'
 import type {
   RESTError,
+  RESTGetAPIApplicationCommandsResult,
   RESTOAuth2ImplicitAuthorizationURLFragmentResult,
 } from 'discord-api-types/v10'
 import {Checkbox, Select, prompt} from 'jsr:@cliffy/prompt@1.0.0-rc.5'
@@ -94,13 +95,12 @@ console.log(`load: %c${commandsPath}`, 'color: green;')
 
 const commands: Command[] = await import(toFileUrl(commandsPath).toString())
   .then((r) => {
-    return [...r?.default ?? [], ...r?.commands ?? []]
+    return [...(r?.default ?? []), ...(r?.commands ?? [])]
   })
   .catch((e) => {
     console.error('invalid commands in file')
     Deno.exit(1)
   })
-
 
 if (args.verbose) console.log('commands:', commands)
 
@@ -117,7 +117,6 @@ const authorize = async () => {
   }
 
   const res = await kv.get<RESTOAuth2ImplicitAuthorizationURLFragmentResult>(['token', clientId])
-
   return res.value
 }
 
@@ -131,6 +130,20 @@ const me = await getMe(token)
 if (args.verbose) console.log('authorize', me)
 else
   console.log(`authorize: %c${clientId} %c${me.application.name}`, 'color: green;', 'color: blue')
+
+const printCommandsCount = (commands: RESTGetAPIApplicationCommandsResult) => {
+  console.log(
+    `%cCommands %c${commands.filter((v) => v.type === 1).length}/100%c | User %c${
+      commands.filter((v) => v.type === 2).length
+    }/5%c | Message %c${commands.filter((v) => v.type === 3).length}/5`,
+    'color: blue',
+    'color: green',
+    'color: blue',
+    'color: green',
+    'color: blue',
+    'color: green'
+  )
+}
 
 while (import.meta.main) {
   const select = await prompt([
@@ -153,7 +166,7 @@ while (import.meta.main) {
 
   if (select.action === 'get') {
     const commands = await getApplicationsCommands(token, args?.guild)
-    console.log(`%cCommands ${commands.length}/100`, 'color: blue')
+    printCommandsCount(commands)
     for (const command of commands) {
       console.log(command.id, command.name)
     }
@@ -161,7 +174,7 @@ while (import.meta.main) {
 
   if (select.action === 'list') {
     const commands = await getApplicationsCommands(token, args?.guild)
-    console.log(`%cCommands ${commands.length}/100`, 'color: blue')
+    printCommandsCount(commands)
     for (const command of commands) {
       console.log(command.id, command.name, command)
     }
