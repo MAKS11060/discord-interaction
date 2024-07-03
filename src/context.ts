@@ -1,10 +1,10 @@
 import {
-  APIApplicationCommandInteractionDataBasicOption,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   InteractionResponseType,
   InteractionType,
   type APIApplicationCommandAutocompleteResponse,
+  type APIApplicationCommandInteractionDataBasicOption,
   type APIApplicationCommandOption,
   type APIAttachment,
   type APICommandAutocompleteInteractionResponseCallbackData,
@@ -25,7 +25,7 @@ import {
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
   type RESTPostAPIContextMenuApplicationCommandsJSONBody,
   type RESTPostAPIInteractionCallbackJSONBody,
-  type RESTPostAPIWebhookWithTokenResult,
+  type RESTPostAPIWebhookWithTokenResult
 } from 'discord-api-types/v10'
 import type {OptionToObject} from './types.ts'
 
@@ -43,6 +43,7 @@ type isRequiredOption<T extends APIApplicationCommandOption, R> = T extends {req
   ? R
   : R | null
 
+// TODO
 // type extractChoices<T extends APIApplicationCommandOptionChoice> = T['name']
 
 export class ApplicationCommandContext<
@@ -57,6 +58,11 @@ export class ApplicationCommandContext<
     readonly payload: Record<string, APIApplicationCommandInteractionDataBasicOption>
   ) {
     // console.log({options, payload})
+  }
+
+  /** Get initiator user */
+  get user(): APIUser {
+    return this.interaction?.user ?? this.interaction.member?.user as APIUser
   }
 
   /**

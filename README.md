@@ -6,26 +6,57 @@
 <!-- https://jsr.io/docs/badges -->
 <!-- [JSR]: https://jsr.io/@maks11060/tmp -->
 <!-- [JSR badge]: https://jsr.io/badges/@maks11060/tmp -->
-<!-- https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/adding-a-workflow-status-badge -->
 [CI]: https://github.com/maks11060/discord-interaction/actions/workflows/ci.yml
 [CI badge]: https://github.com/maks11060/discord-interaction/actions/workflows/ci.yml/badge.svg
 
-<!--
-## Install using deno install
-> deno install -Arfg -n deploydiscord jsr:@maks11060/discord-interaction
--->
+### Library for handling **Discord Interaction**.
+Handle slash command, user and chat command.
 
-<!--
+## Quick Start
+
+1. Create an application on [Discord dev](https://discord.com/developers/applications)
+2. Add **Application** to your server:
+   - Replace `client_id` with yours
+   - https://discord.com/oauth2/authorize?client_id=0123456789012345678
+3. Copy `PUBLIC KEY` to .env
+4. Copy `CLIENT_ID` and `CLIENT_SECRET` from OAuth2 page
+
+### `.env` file:
+```env
+# Discord https://discord.com/developers/applications
+# CLIENT_ID=        # Only for deploying commands
+# CLIENT_SECRET=    # Only for deploying commands
+CLIENT_PUBLIC_KEY=  # Application public key
+```
+
+## Install CLI
+```ps
+deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interaction/cli
+```
+
 ## Usage
 
 Define commands:
 ```ts
 // commands.ts
-import {defineCommand} from '@maks11060/discord-interaction'
+import {defineCommand, format} from '@maks11060/discord-interaction'
 
-const help = defineCommand({}) // TODO
+const hello = defineCommand({
+  name: 'hello',
+  description: 'says hi',
+}).createHandler({
+  hello: () => {
+    return {
+      command: (c) => {
+        return c.reply({
+          content: `Hello ${format.user(c.user.id)}`
+        })
+      },
+    }
+  },
+})
 
-export const commands = [help]
+export const commands = [hello]
 ```
 
 ### Use [Hono](https://hono.dev)
@@ -38,11 +69,9 @@ import {commands} from './commands.ts'
 const app = new Hono()
 const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
 
-app.post('/interaction', ...discordInteraction(key, /* commands */))
+app.post('/interaction', ...discordInteraction(key, commands))
 
-Deno.serve(app.fetch) // Deno
-// export default app // Bun/CF worker
-// for any runtime https://hono.dev/getting-started/basic
+Deno.serve(app.fetch)
 ```
 
 ### Without framework
@@ -61,37 +90,3 @@ Deno.serve(req => {
   return new Response('404 Not found', {status: 404})
 })
 ```
-
-## Deploy commands
- -->
-
-<!-- TODO
-1. Set env `CLIENT_ID` `CLIENT_SECRET`
-2. Install CLI
-3. CLI -c ./commands.ts -->
-
-
-<!--
-```ts
-// commands.ts
-import {MessageFlags} from 'discord-api-types/v10'
-import {defineCommand} from './mod.ts'
-
-const help = defineCommand(
-  {
-    name: 'help',
-    description: 'Show help',
-  },
-  () => {
-    return {
-      command(c) {
-        return c.reply({content: 'ok', flags: MessageFlags.Ephemeral})
-      },
-    }
-  }
-)
-
-export const commands = [help]
-```
-
-## Examples

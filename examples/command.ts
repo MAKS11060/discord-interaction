@@ -6,7 +6,7 @@ import {
   TextInputStyle,
 } from 'discord-api-types/v10'
 import {ulid} from 'jsr:@std/ulid'
-import {defineCommand} from '../mod.ts'
+import {defineCommand, format} from '../mod.ts'
 
 const test1 = defineCommand({
   name: 'test1',
@@ -345,20 +345,19 @@ const all2 = defineCommand({
   },
 })
 
-export const commands = [test1, test2, test3, test4, test5, all, all2, test7]
-
-const call = defineCommand({
-  name: 'Call',
-  type: 2
+const hello = defineCommand({
+  name: 'hello',
+  description: 'says hi',
 }).createHandler({
-  Call: () => {
+  hello: () => {
     return {
-      command(c) {
+      command: (c) => {
         return c.reply({
-          content: '13',
+          content: `Hello ${format.user(c.user.id)}`,
         })
       },
     }
   },
 })
-// export default [call]
+
+export const commands = [test1, test2, test3, test4, test5, all, all2, test7, hello]
