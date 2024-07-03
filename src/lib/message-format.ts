@@ -4,7 +4,7 @@
  * format.user('80351110224678912') // <@80351110224678912>
  * ```
  */
-const user = (user_id: string) => `<@${user_id}>`
+const user = (user_id: string): string => `<@${user_id}>`
 
 /**
  * @example
@@ -12,7 +12,7 @@ const user = (user_id: string) => `<@${user_id}>`
  * format.channel('80351110224678912') // <#103735883630395392>
  * ```
  */
-const channel = (channel_id: string) => `<#${channel_id}>`
+const channel = (channel_id: string): string => `<#${channel_id}>`
 
 /**
  * @example
@@ -20,7 +20,7 @@ const channel = (channel_id: string) => `<#${channel_id}>`
  * format.role('80351110224678912') // <@&103735883630395392>
  * ```
  */
-const role = (role_id: string) => `<@&${role_id}>`
+const role = (role_id: string): string => `<@&${role_id}>`
 
 /**
  * @example
@@ -30,7 +30,7 @@ const role = (role_id: string) => `<@&${role_id}>`
  * format.slashCommand('airhorn sub_group sub', '816437322781949972') // </airhorn sub_group sub:816437322781949972>
  * ```
  */
-const slashCommand = (name: string, command_id: string) => `</${name}:${command_id}>`
+const slashCommand = (name: string, command_id: string): string => `</${name}:${command_id}>`
 
 /**
  * @example
@@ -38,7 +38,7 @@ const slashCommand = (name: string, command_id: string) => `</${name}:${command_
  * format.customEmoji('mmLol', '216154654256398347') // <:mmLol:216154654256398347>
  * ```
  */
-const customEmoji = (name: string, command_id: string) => `<:${name}:${command_id}>`
+const customEmoji = (name: string, command_id: string): string => `<:${name}:${command_id}>`
 
 /**
  * @example
@@ -46,8 +46,12 @@ const customEmoji = (name: string, command_id: string) => `<:${name}:${command_i
  * format.customAnimatedEmoji('mmLol', '216154654256398347') // <a:mmLol:216154654256398347>
  * ```
  */
-const customAnimatedEmoji = (name: string, command_id: string) => `<a:${name}:${command_id}>`
+const customAnimatedEmoji = (name: string, command_id: string): string =>
+  `<a:${name}:${command_id}>`
 
+/**
+ * {@link https://discord.com/developers/docs/reference#message-formatting-timestamp-styles Discord timestamp format styles}
+ */
 export enum DateTimeFormat {
   /** Short time format (e.g. 16:20) */
   ShortTime = 't',
@@ -75,7 +79,7 @@ export enum DateTimeFormat {
 const timestamp = (
   time: Date | number,
   style: DateTimeFormat = DateTimeFormat.ShortDateTime
-) => {
+): string => {
   return time instanceof Date
     ? `<t:${Math.floor(time.getTime() / 1000)}:${style}>`
     : `<t:${Math.floor(time)}:${style}>`

@@ -33,6 +33,7 @@
     ],
     "exclude": [
       ".github",
+      "scripts",
       "examples",
       "**/*.test.ts"
     ]
