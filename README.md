@@ -90,3 +90,16 @@ Deno.serve(req => {
   return new Response('404 Not found', {status: 404})
 })
 ```
+
+## TODO
+  - [x] ApplicationCommandContext
+    - [x] getter for options
+    - [x] reply/replyUpdate
+    - [ ] deferredReply/deferredReplyUpdate
+  - [x] ApplicationCommandAutocompleteContext
+    - [ ] deferredReply/deferredReplyUpdate
+  - [x] MessageComponentContext
+    - [ ] deferredReply
+  - [x] ModalContext
+    - [ ] deferredReply
+  - [x] ContextMenuCommandContext
