@@ -278,7 +278,7 @@ export const createHandler = async (commands: Command[]) => {
  * import {commands} from './commands.ts'
  *
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
- * const interaction = await discordInteraction(key, [])
+ * const interaction = await discordInteraction(key, commands)
  *
  * Deno.serve(req => {
  *   const uri = new URL(req.url)
@@ -316,6 +316,27 @@ const validateCommand = <T extends RESTPostAPIApplicationCommandsJSONBody>(comma
   return commandSchema.passthrough().parse(command) as unknown as T
 }
 
+/**
+ * Command handler for the "hello" command.
+ *
+ * @example
+ * import {defineCommand, format} from '@maks11060/discord-interaction'
+ *
+ * const hello = defineCommand({
+ *   name: 'hello',
+ *   description: 'says hi',
+ * }).createHandler({
+ *   hello: () => {
+ *     return {
+ *       command: (c) => {
+ *         return c.reply({
+ *           content: `Hello ${format.user(c.user.id)}`,
+ *         })
+ *       },
+ *     }
+ *   },
+ * })
+ */
 export const defineCommand = <const T extends RESTPostAPIApplicationCommandsJSONBody>(
   command: T
 ): {
@@ -335,13 +356,19 @@ export const defineCommand = <const T extends RESTPostAPIApplicationCommandsJSON
   }
 }
 
-// export const defineCommands = <const T extends RESTPostAPIApplicationCommandsJSONBody[]>(commands: T) => {
-//   // command = validateCommand(command)
-//   let command
+// export const defineCommands = <const T extends RESTPostAPIApplicationCommandsJSONBody[]>(
+//   commands: T
+// ): {
+//   commands: T
+//   createHandler(handler: DefineHandlerArray<T>): {
+//     commands: T
+//     handler: DefineHandlerArray<T>
+//   }
+// } => {
 //   return {
-//     command,
-//     createHandler(handler: DefineHandler<Unpack<T>>) {
-//       return {command, handler}
+//     commands,
+//     createHandler(handler: DefineHandlerArray<T>) {
+//       return {commands, handler}
 //     },
 //   }
 // }

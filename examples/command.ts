@@ -338,8 +338,7 @@ const all2 = defineCommand({
     sub: () => ({
       command: (c) => {
         console.log(c.getString('sr'))
-
-        return c.reply({content: `ok <t:${Math.floor(Date.now() / 1000)}:R>`})
+        return c.reply({content: `ok ${format.timestamp(new Date())}`})
       },
     }),
   },
@@ -360,4 +359,4 @@ const hello = defineCommand({
   },
 })
 
-export const commands = [test1, test2, test3, test4, test5, all, all2, test7, hello]
+export const commands = [test1, test2, test3, test4, test5, hello, all, all2, test7]

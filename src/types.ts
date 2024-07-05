@@ -6,7 +6,7 @@ import type {
   APIInteractionResponse,
   RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
-  RESTPostAPIContextMenuApplicationCommandsJSONBody,
+  RESTPostAPIContextMenuApplicationCommandsJSONBody
 } from 'discord-api-types/v10'
 import type {
   ApplicationCommandAutocompleteContext,
@@ -124,7 +124,7 @@ export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplication
     [K in T['name']]: ContextMenuHandler<T>
   }
 
-export type Handler = CommandHandler<any, never> | ContextMenuHandler<any>
+export type Handler = CommandHandler<any, any> | ContextMenuHandler<any>
 
 type HandlerRecord = Record<string, Handler | Record<string, Handler | Record<string, Handler>>>
 
@@ -139,3 +139,26 @@ export type DefineHandler<T extends RESTPostAPIApplicationCommandsJSONBody> =
     : T extends RESTPostAPIContextMenuApplicationCommandsJSONBody
     ? ContextMenuCommandSchema<T>
     : never
+
+// =========================== // defineCommands // UNSTABLE TYPES
+// export type DefineHandlerArray<T extends RESTPostAPIApplicationCommandsJSONBody[]> =
+//   UnionToIntersection<DefineHandler<Unpack<T>>>
+
+// type B = DefineHandlerArray<
+//   [
+//     {
+//       name: 'a'
+//       description: 'a'
+//       options: [
+//         {type: ApplicationCommandOptionType.String; name: 's'; description: 'd'}
+//       ]
+//     },
+//     {
+//       name: 'b'
+//       description: 'a'
+//       options: [
+//         {type: ApplicationCommandOptionType.String; name: 's'; description: 'd'}
+//       ]
+//     }
+//   ]
+// >
