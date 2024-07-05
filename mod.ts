@@ -35,7 +35,7 @@
  * ```
  */
 
-export {defineCommand, defineCommands, discordInteraction} from './src/interaction.ts'
+export {defineCommand, discordInteraction} from './src/interaction.ts'
 export {importKeyRaw} from './src/lib/ed25519.ts'
 export {DateTimeFormat, format} from './src/lib/message-format.ts'
 
