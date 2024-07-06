@@ -276,7 +276,6 @@ export const createHandler = async (commands: Command[]) => {
  * @param {Command[]} commands - An array of Command objects representing the commands that the bot supports.
  * @returns {Promise<(req: Request) => Promise<Response>>} A promise that resolves to a function that can be used to handle Discord interactions.
  *
- *
  * @example
  * ```ts
  * import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions'
@@ -322,9 +321,10 @@ const validateCommand = <T extends RESTPostAPIApplicationCommandsJSONBody>(comma
 }
 
 /**
- * Command handler for the "hello" command.
+ * DefineCommand for discord-interaction handler
  *
  * @example
+ * ```ts
  * import {defineCommand, format} from '@maks11060/discord-interactions'
  *
  * const hello = defineCommand({
@@ -341,6 +341,7 @@ const validateCommand = <T extends RESTPostAPIApplicationCommandsJSONBody>(comma
  *     }
  *   },
  * })
+ * ```
  */
 export const defineCommand = <const T extends RESTPostAPIApplicationCommandsJSONBody>(
   command: T

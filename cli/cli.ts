@@ -7,12 +7,12 @@
  *
  * @example Install cli
  * ```bash
- * deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interactions/cli
+ * deno install -Arfg -n deploy-discord --unstable-kv jsr:@maks11060/discord-interactions/cli
  * ```
  *
  * @example Run directly
  * ```bash
- * deno run -A jsr:@maks11060/discord-interactions/cli
+ * deno run -A --unstable-kv jsr:@maks11060/discord-interactions/cli
  * ```
  *
  * @example Usage
@@ -29,7 +29,7 @@ import type {
   RESTGetAPIApplicationCommandsResult,
   RESTOAuth2ImplicitAuthorizationURLFragmentResult,
 } from 'discord-api-types/v10'
-import {Checkbox, Select, prompt} from 'jsr:@cliffy/prompt@1.0.0-rc.5'
+import {Checkbox, Select, prompt} from '@cliffy/prompt'
 import type {Command} from '../src/types.ts'
 import {
   clientId,

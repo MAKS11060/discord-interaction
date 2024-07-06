@@ -30,8 +30,11 @@ CLIENT_PUBLIC_KEY=  # Required for verifying requests
 
 ## Install CLI
 ```ps
-deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interactions/cli
+deno install -Arfg -n deploy-discord --unstable-kv jsr:@maks11060/discord-interactions/cli
 ```
+\* Works if the import in `commands.ts` starts with '`jsr:`'
+
+`import {defineCommand, format} from 'jsr:@maks11060/discord-interactions'`
 
 ## Usage
 
