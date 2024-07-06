@@ -34,8 +34,8 @@ command
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
-  RESTPostAPIContextMenuApplicationCommandsJSONBody,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
+  type RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from 'discord-api-types/v10'
 import {commandSchema, userOrMessageCommandSchema} from './schema.ts'
 

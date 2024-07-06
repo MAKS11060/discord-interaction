@@ -7,12 +7,12 @@
  *
  * @example Install cli
  * ```bash
- * deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interaction/cli
+ * deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interactions/cli
  * ```
  *
  * @example Run directly
  * ```bash
- * deno run -A jsr:@maks11060/discord-interaction/cli
+ * deno run -A jsr:@maks11060/discord-interactions/cli
  * ```
  *
  * @example Usage

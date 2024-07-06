@@ -5,7 +5,7 @@
  * @example Usage hono framework
  * ```ts
  * import {Hono} from 'hono'
- * import {discordInteraction, importKeyRaw} from '@maks11060/discord-interaction/hono'
+ * import {discordInteraction, importKeyRaw} from '@maks11060/discord-interactions/hono'
  *
  * const app = new Hono()
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
@@ -18,7 +18,7 @@
 
 import type {APIInteraction} from 'discord-api-types/v10'
 import type {Handler} from 'hono'
-import {createFactory, createMiddleware} from 'hono/factory'
+import {createFactory} from 'hono/factory'
 import {createHandler} from '../interaction.ts'
 import {verifyRequestSignature as verifyRequest} from '../lib/ed25519.ts'
 import type {Command} from '../types.ts'
@@ -26,13 +26,13 @@ import type {Command} from '../types.ts'
 export {importKeyRaw} from '../lib/ed25519.ts'
 
 /**
- * Verify {@linkcode Request} signature using {@linkcode CryptoKey}(publicKey).
- * - header `X-Signature-Ed25519`
- * - header `X-Signature-Timestamp`
- * - payload (`X-Signature-Timestamp` + `body`)
+ * Creates a middleware function that verifies the signature of a request using a CryptoKey object.
+ *
+ * @param {CryptoKey} key - The CryptoKey object representing the public key to use for verification.
+ * @returns {MiddlewareHandler} A middleware function that can be used with the Hono framework to verify the signature of a request.
  */
 const verifyRequestSignature = (key: CryptoKey) => {
-  return createMiddleware(async (c, next) => {
+  return createFactory().createMiddleware(async (c, next) => {
     const invalid = await verifyRequest(c.req.raw, key)
     if (invalid) return invalid
     await next()
@@ -40,12 +40,18 @@ const verifyRequestSignature = (key: CryptoKey) => {
 }
 
 /**
- * Adapter for {@link https://hono.dev Hono} framework
+ * Adapter for {@link https://hono.dev Hono} framework.
+ *
+ * Creates a set of middleware handlers for the Hono framework that can be used to handle Discord interactions.
+ *
+ * @param {CryptoKey} key - The CryptoKey object representing the public key to use for verifying the signature of the interaction.
+ * @param {Command[]} commands - An array of Command objects representing the commands that the bot supports.
+ * @returns {Promise<Handler[]>} A promise that resolves to an array of middleware handlers that can be used with the Hono framework to handle Discord interactions.
  *
  * @example
  * ```ts
  * import {Hono} from 'hono'
- * import {discordInteraction} from '@maks11060/discord-interaction/hono'
+ * import {discordInteraction} from '@maks11060/discord-interactions/hono'
  *
  * const app = new Hono()
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
@@ -59,7 +65,7 @@ export const discordInteraction = async (
 ): Promise<Handler[]> => {
   const handler = await createHandler(commands)
 
-  const interactionHandler = createMiddleware(async (c) => {
+  const interactionHandler = createFactory().createMiddleware(async (c) => {
     const interaction = await c.req.json<APIInteraction>()
     return c.json(await handler(interaction))
   })

@@ -1,11 +1,11 @@
 /**
  * @module
  *
- * Discord interaction library
+ * Discord interactions library
  *
  * @example Use web standards api
  * ```ts
- * import {importKeyRaw, discordInteraction} from '@maks11060/discord-interaction'
+ * import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions'
  * import {commands} from './commands.ts'
  *
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
@@ -23,7 +23,7 @@
  * @example Use `Hono` framework
  * ```ts
  * import {Hono} from 'hono'
- * import {discordInteraction, importKeyRaw} from '@maks11060/discord-interaction/hono'
+ * import {discordInteraction, importKeyRaw} from '@maks11060/discord-interactions/hono'
  * import {commands} from './commands.ts'
  *
  * const app = new Hono()

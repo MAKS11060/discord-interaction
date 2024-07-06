@@ -1,13 +1,13 @@
-# discord-interaction [WIP]
+<h1 align="center">Discord Interactions</h1>
+<div align="center">
+  <a href="https://jsr.io/@maks11060/discord-interactions">
+    <img src="https://jsr.io/badges/@maks11060/discord-interactions">
+  </a>
+  <a href="https://github.com/MAKS11060/discord-interactions/actions/workflows/ci.yml">
+    <img src="https://github.com/MAKS11060/discord-interactions/actions/workflows/ci.yml/badge.svg">
+  </a>
+</div>
 
-<!-- [![JSR][JSR badge]][JSR] -->
-[![CI][CI badge]][CI]
-
-<!-- https://jsr.io/docs/badges -->
-<!-- [JSR]: https://jsr.io/@maks11060/tmp -->
-<!-- [JSR badge]: https://jsr.io/badges/@maks11060/tmp -->
-[CI]: https://github.com/maks11060/discord-interaction/actions/workflows/ci.yml
-[CI badge]: https://github.com/maks11060/discord-interaction/actions/workflows/ci.yml/badge.svg
 
 ### Library for handling **Discord Interaction**.
 Handle slash command, user and chat command.
@@ -31,7 +31,7 @@ CLIENT_PUBLIC_KEY=  # Application public key
 
 ## Install CLI
 ```ps
-deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interaction/cli
+deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interactions/cli
 ```
 
 ## Usage
@@ -39,7 +39,7 @@ deno install -Arfg -n deploy-discord jsr:@maks11060/discord-interaction/cli
 Define commands:
 ```ts
 // commands.ts
-import {defineCommand, format} from '@maks11060/discord-interaction'
+import {defineCommand, format} from '@maks11060/discord-interactions'
 
 const hello = defineCommand({
   name: 'hello',
@@ -63,7 +63,7 @@ export const commands = [hello]
 
 ```ts
 import {Hono} from 'hono'
-import {importKeyRaw, discordInteraction} from '@maks11060/discord-interaction/hono'
+import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions/hono'
 import {commands} from './commands.ts'
 
 const app = new Hono()
@@ -76,7 +76,7 @@ Deno.serve(app.fetch)
 
 ### Without framework
 ```ts
-import {importKeyRaw, discordInteraction} from '@maks11060/discord-interaction'
+import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions'
 import {commands} from './commands.ts'
 
 const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
