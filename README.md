@@ -9,24 +9,23 @@
 </div>
 
 
-### Library for handling **Discord Interaction**.
-Handle slash command, user and chat command.
+### Library for handling **Discord Interactions**.
+Handle slash command, user and chat command. [Overview of Interactions](https://discord.com/developers/docs/interactions/overview)
 
 ## Quick Start
 
-1. Create an application on [Discord dev](https://discord.com/developers/applications)
-2. Add **Application** to your server:
-   - Replace `client_id` with yours
-   - https://discord.com/oauth2/authorize?client_id=0123456789012345678
-3. Copy `PUBLIC KEY` to .env
-4. Copy `CLIENT_ID` and `CLIENT_SECRET` from OAuth2 page
+1. Create a new application on the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Add your application to your Discord server by visiting the following URL and replacing `your_client_id` with your actual client ID:
+   - `https://discord.com/oauth2/authorize?client_id=your_client_id`
+3. Copy the `PUBLIC KEY` from your application's settings page and add it to your `.env` file.
+4. Copy the `CLIENT_ID` and `CLIENT_SECRET` from the OAuth2 page of your application's settings and add them to your `.env` file.
 
 ### `.env` file:
-```env
-# Discord https://discord.com/developers/applications
-# CLIENT_ID=        # Only for deploying commands
-# CLIENT_SECRET=    # Only for deploying commands
-CLIENT_PUBLIC_KEY=  # Application public key
+```
+# Discord application settings
+# CLIENT_ID=        # Required for deploying commands
+# CLIENT_SECRET=    # Required for deploying commands
+CLIENT_PUBLIC_KEY=  # Required for verifying requests
 ```
 
 ## Install CLI
