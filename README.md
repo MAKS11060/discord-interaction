@@ -68,7 +68,7 @@ import {commands} from './commands.ts'
 const app = new Hono()
 const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
 
-app.post('/interaction', ...discordInteraction(key, commands))
+app.post('/interaction', ...await discordInteraction(key, commands))
 
 Deno.serve(app.fetch)
 ```
