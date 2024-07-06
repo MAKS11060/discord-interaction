@@ -24,4 +24,4 @@ jobs:
         uses: maks11060/deno-publish-version@v1
 
       - name: Publish to JSR
-        run: deno publish
+        run: deno publish --allow-dirty
