@@ -99,7 +99,8 @@ Deno.serve(req => {
     - [x] reply/replyUpdate
     - [ ] deferredReply/deferredReplyUpdate
   - [x] ApplicationCommandAutocompleteContext
-    - [ ] deferredReply/deferredReplyUpdate
+    - [x] get[string/integer/number]
+    - [x] autocomplete()
   - [x] MessageComponentContext
     - [ ] deferredReply
   - [x] ModalContext
