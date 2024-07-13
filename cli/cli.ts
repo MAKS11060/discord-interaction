@@ -21,15 +21,15 @@
  * ```
  */
 
-import {parseArgs} from '@std/cli/parse-args'
-import {resolve} from '@std/path/resolve'
-import {toFileUrl} from '@std/path/to-file-url'
+import {Checkbox, Select, prompt} from 'jsr:@cliffy/prompt@1.0.0-rc.5'
+import {parseArgs} from 'jsr:@std/cli@0/parse-args'
+import {resolve} from 'jsr:@std/path@0/resolve'
+import {toFileUrl} from 'jsr:@std/path@0/to-file-url'
 import type {
   RESTError,
   RESTGetAPIApplicationCommandsResult,
   RESTOAuth2ImplicitAuthorizationURLFragmentResult,
-} from 'discord-api-types/v10'
-import {Checkbox, Select, prompt} from '@cliffy/prompt'
+} from 'npm:discord-api-types@0/v10'
 import type {Command} from '../src/types.ts'
 import {
   clientId,
@@ -67,9 +67,9 @@ const printOptions = (options: {arg: string; description: string}[], offset = 4)
   }
 }
 
-const help = `%cdeploydiscord Help
+const help = `%cdeploy-discord Help
 
-%cUsage: %cdeploydiscord %c./commands.ts
+%cUsage: %cdeploy-discord %c./commands.ts
 
 %cOptions:`
 
@@ -105,6 +105,13 @@ const commands: Command[] = await import(toFileUrl(commandsPath).toString())
 if (args.verbose) console.log('commands:', commands)
 
 const kv = await Deno.openKv()
+if (args.verbose) {
+  console.log('KV STORE')
+  for await (const data of kv.list({prefix: []})) {
+    console.log(data.key.join(' '), data.value)
+  }
+  console.log('KV STORE')
+}
 
 const authorize = async () => {
   if (!(await kv.get(['token', clientId])).versionstamp) {

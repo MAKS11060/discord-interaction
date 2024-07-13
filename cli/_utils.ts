@@ -1,13 +1,13 @@
-import {Spinner} from '@std/cli/spinner'
-import '@std/dotenv/load'
+import {Spinner} from 'jsr:@std/cli@0/spinner'
+import 'jsr:@std/dotenv@0/load'
 import {
   Locale,
-  type RESTGetAPIOAuth2CurrentAuthorizationResult,
   type RESTGetAPIApplicationCommandsResult,
+  type RESTGetAPIOAuth2CurrentAuthorizationResult,
   type RESTPostAPIApplicationCommandsJSONBody,
   type RESTPostAPIApplicationCommandsResult,
   type RESTPostOAuth2ClientCredentialsResult,
-} from 'discord-api-types/v10'
+} from 'npm:discord-api-types@0/v10'
 
 export const clientId = Deno.env.get('CLIENT_ID')!
 const clientSecret = Deno.env.get('CLIENT_SECRET')!

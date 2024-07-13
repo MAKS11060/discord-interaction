@@ -386,7 +386,7 @@ export class ApplicationCommandAutocompleteContext<O extends APIApplicationComma
   /**
    * Return empty `autocompletion`
    */
-  pass() {
+  pass(): APIApplicationCommandAutocompleteResponse {
     return this.autocomplete({choices: []})
   }
 }
