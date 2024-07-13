@@ -4,6 +4,8 @@ import {
   ButtonStyle,
   ComponentType,
   TextInputStyle,
+  type APIActionRowComponent,
+  type APIMessageActionRowComponent,
 } from 'discord-api-types/v10'
 import {ulid} from 'jsr:@std/ulid'
 import {defineCommand, format} from '../mod.ts'
@@ -508,6 +510,75 @@ const autocompleteTest2 = defineCommand({
   },
 })
 
+const messageComponentTest = defineCommand({
+  name: 'message-component',
+  description: 'message component test',
+  options: [
+    {
+      type: ApplicationCommandOptionType.String,
+      name: 'str',
+      description: 'Str',
+    },
+  ],
+}).createHandler({
+  'message-component': () => {
+    const initialState: APIActionRowComponent<APIMessageActionRowComponent>[] = [
+      {
+        type: ComponentType.ActionRow,
+        components: [
+          {
+            type: ComponentType.Button,
+            style: ButtonStyle.Danger,
+            label: 'reset',
+            custom_id: 'reset',
+          },
+          {
+            type: ComponentType.Button,
+            style: ButtonStyle.Success,
+            label: 'clicks: 0',
+            custom_id: '0',
+          },
+        ],
+      },
+    ]
+
+    return {
+      command(c) {
+        return c.reply({components: initialState})
+      },
+
+      messageComponent(c) {
+        if (c.customId === 'reset') {
+          return c.replyUpdate({components: initialState})
+        }
+
+        const clicks = Number(c.customId) + 1
+        return c.replyUpdate({
+          components: [
+            {
+              type: ComponentType.ActionRow,
+              components: [
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Danger,
+                  label: 'reset',
+                  custom_id: 'reset',
+                },
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Success,
+                  label: `clicks: ${clicks}`,
+                  custom_id: `${clicks}`,
+                },
+              ],
+            },
+          ],
+        })
+      },
+    }
+  },
+})
+
 export const commands = [
   //
   test1,
@@ -521,4 +592,5 @@ export const commands = [
   hello,
   autocompleteTest,
   autocompleteTest2,
+  messageComponentTest,
 ]

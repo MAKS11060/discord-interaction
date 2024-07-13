@@ -3,6 +3,7 @@ import {
   ApplicationCommandType,
   InteractionResponseType,
   InteractionType,
+  type APIApplicationCommandAutocompleteInteraction,
   type APIApplicationCommandAutocompleteResponse,
   type APIApplicationCommandInteractionDataBasicOption,
   type APIApplicationCommandInteractionDataIntegerOption,
@@ -20,11 +21,13 @@ import {
   type APIInteractionResponseDeferredChannelMessageWithSource,
   type APIInteractionResponseDeferredMessageUpdate,
   type APIInteractionResponseUpdateMessage,
+  type APIMessageComponentInteraction,
   type APIModalInteractionResponse,
   type APIModalInteractionResponseCallbackData,
   type APIModalSubmission,
   type APIRole,
   type APIUser,
+  type ComponentType,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
   type RESTPostAPIContextMenuApplicationCommandsJSONBody,
   type RESTPostAPIInteractionCallbackJSONBody,
@@ -308,14 +311,20 @@ export class ApplicationCommandContext<
   }
 }
 
+/**
+ * Represents the context of an application command autocomplete interaction.
+ */
 export class ApplicationCommandAutocompleteContext<O extends APIApplicationCommandOption> {
   constructor(
-    readonly interaction: APIInteraction,
+    readonly interaction: APIApplicationCommandAutocompleteInteraction,
     readonly payload: Record<string, APIApplicationCommandInteractionDataBasicOption>
   ) {}
 
   /**
-   * Get `String`
+   * Gets the value of a string option from the payload of the application command autocomplete interaction.
+   * @template K - The name of the string option.
+   * @param {K} name - The name of the string option.
+   * @returns {isRequiredOption<O extends {name: K} ? O : never, APIApplicationCommandInteractionDataStringOption>} The value of the string option, or null if the option is not present or not a string option.
    */
   getString<K extends PickTypeWithAutocomplete<O, ApplicationCommandOptionType.String>['name']>(
     name: K
@@ -334,7 +343,10 @@ export class ApplicationCommandAutocompleteContext<O extends APIApplicationComma
   }
 
   /**
-   * Get `Integer`
+   * Gets the value of an integer option from the payload of the application command autocomplete interaction.
+   * @template K - The name of the integer option.
+   * @param {K} name - The name of the integer option.
+   * @returns {isRequiredOption<O extends {name: K} ? O : never, APIApplicationCommandInteractionDataIntegerOption>} The value of the integer option, or null if the option is not present or not an integer option.
    */
   getInteger<K extends PickTypeWithAutocomplete<O, ApplicationCommandOptionType.Integer>['name']>(
     name: K
@@ -353,7 +365,10 @@ export class ApplicationCommandAutocompleteContext<O extends APIApplicationComma
   }
 
   /**
-   * Get `Number`
+   * Gets the value of a number option from the payload of the application command autocomplete interaction.
+   * @template K - The name of the number option.
+   * @param {K} name - The name of the number option.
+   * @returns {isRequiredOption<O extends {name: K} ? O : never, APIApplicationCommandInteractionDataNumberOption>} The value of the number option, or null if the option is not present or not a number option.
    */
   getNumber<K extends PickTypeWithAutocomplete<O, ApplicationCommandOptionType.Number>['name']>(
     name: K
@@ -372,7 +387,9 @@ export class ApplicationCommandAutocompleteContext<O extends APIApplicationComma
   }
 
   /**
-   * autocomplete result
+   * Creates an application command autocomplete response with the given data.
+   * @param {APICommandAutocompleteInteractionResponseCallbackData} data - The data for the autocomplete response.
+   * @returns {APIApplicationCommandAutocompleteResponse} The application command autocomplete response.
    */
   autocomplete(
     data: APICommandAutocompleteInteractionResponseCallbackData
@@ -384,15 +401,41 @@ export class ApplicationCommandAutocompleteContext<O extends APIApplicationComma
   }
 
   /**
-   * Return empty `autocompletion`
+   * Creates an empty application command autocomplete response.
+   * @returns {APIApplicationCommandAutocompleteResponse} The empty application command autocomplete response.
    */
   pass(): APIApplicationCommandAutocompleteResponse {
     return this.autocomplete({choices: []})
   }
 }
 
+/**
+ * Represents the context of a message component interaction.
+ */
 export class MessageComponentContext {
-  /** Send a new message in response */
+  constructor(readonly interaction: APIMessageComponentInteraction) {}
+
+  /**
+   * Gets the type of the message component.
+   * @returns {ComponentType} The type of the message component.
+   */
+  get type(): ComponentType {
+    return this.interaction.data.component_type
+  }
+
+  /**
+   * Gets the custom ID of the message component.
+   * @returns {string} The custom ID of the message component, which is a string with a maximum length of 100 characters.
+   */
+  get customId(): string {
+    return this.interaction.data.custom_id
+  }
+
+  /**
+   * Sends a new message in response to the message component interaction.
+   * @param {APIInteractionResponseCallbackData} data - The data for the new message.
+   * @returns {APIInteractionResponseChannelMessageWithSource} The interaction response object.
+   */
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -400,7 +443,11 @@ export class MessageComponentContext {
     }
   }
 
-  /** Replaces the current message */
+  /**
+   * Replaces the current message with a new message in response to the message component interaction.
+   * @param {APIInteractionResponseCallbackData} data - The data for the new message.
+   * @returns {APIInteractionResponseUpdateMessage} The interaction response object.
+   */
   replyUpdate(data: APIInteractionResponseCallbackData): APIInteractionResponseUpdateMessage {
     return {
       type: InteractionResponseType.UpdateMessage,
@@ -409,7 +456,9 @@ export class MessageComponentContext {
   }
 
   /**
-   * Create `modal` window.
+   * Creates a modal window in response to the message component interaction.
+   * @param {APIModalInteractionResponseCallbackData} data - The data for the modal window.
+   * @returns {APIModalInteractionResponse} The interaction response object.
    */
   modal(data: APIModalInteractionResponseCallbackData): APIModalInteractionResponse {
     return {

@@ -102,7 +102,6 @@ Deno.serve(req => {
     - [x] get[string/integer/number]
     - [x] autocomplete()
   - [x] MessageComponentContext
-    - [ ] deferredReply
-  - [x] ModalContext
-    - [ ] deferredReply
+    - [x] getter(type/customId)
+  - [ ] ModalContext
   - [x] ContextMenuCommandContext

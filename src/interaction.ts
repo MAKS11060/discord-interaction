@@ -196,7 +196,7 @@ export const createHandler = async (commands: Command[]) => {
     }
 
     if (interaction.type === InteractionType.MessageComponent) {
-      const c = new MessageComponentContext()
+      const c = new MessageComponentContext(interaction)
       const metadata = interaction.message?.interaction_metadata as
         | (APIMessageInteractionMetadata & {name: string})
         | undefined
