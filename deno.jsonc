@@ -18,8 +18,7 @@
     "@std/encoding": "jsr:@std/encoding@1",
     "@std/path": "jsr:@std/path@0",
     "discord-api-types": "npm:discord-api-types@0",
-    "zod": "npm:zod@3",
-    "@cliffy/prompt": "jsr:@cliffy/prompt@1.0.0-rc.5"
+    "zod": "npm:zod@3"
   },
   "exports": {
     ".": "./mod.ts",
@@ -34,7 +33,6 @@
     ],
     "exclude": [
       ".github",
-      "scripts",
       "examples",
       "**/*.test.ts"
     ]

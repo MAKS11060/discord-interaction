@@ -1,8 +1,10 @@
 name: Publish
 
 on:
-  release:
-    types: [published]
+  # release:
+    # types: [published]
+  push:
+    tags: 'v*.*.*'
 
 jobs:
   publish:
@@ -25,3 +27,6 @@ jobs:
 
       - name: Publish to JSR
         run: deno publish --allow-dirty
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
