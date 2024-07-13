@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno test -A --watch
 import {InteractionType, type APIInteraction} from 'discord-api-types/v10'
 import {Hono} from 'hono'
-import {assertEquals} from 'jsr:@std/assert/assert-equals'
+import {assertEquals} from 'jsr:@std/assert/equals'
 import {signRequest} from '../lib/ed25519.ts'
 import {discordInteraction} from './hono.ts'
 
