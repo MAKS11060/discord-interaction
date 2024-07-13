@@ -31,15 +31,15 @@ export type Unpack<T extends unknown[] | undefined> = T extends Array<infer O> ?
 
 export type EmptyArray<T> = T extends [] ? never : T
 
-type Autocomplete<T extends APIApplicationCommandOption> = T extends {
-  autocomplete: true
-}
-  ? {
-      autocomplete(
-        c: ApplicationCommandAutocompleteContext<T>
-      ): APIInteractionResponse | Promise<APIInteractionResponse>
-    }
-  : never
+// type Autocomplete<T extends APIApplicationCommandOption> = T extends {
+//   autocomplete: true
+// }
+//   ? {
+//       autocomplete(
+//         c: ApplicationCommandAutocompleteContext<T>
+//       ): APIInteractionResponse | Promise<APIInteractionResponse>
+//     }
+//   : never
 
 export type isRequiredOption<T extends APIApplicationCommandBasicOption> = T extends {
   required: true
@@ -84,8 +84,12 @@ export type CommandHandler<
        * ```
        */
       modalSubmit?(c: ModalContext): APIInteractionResponse | Promise<APIInteractionResponse> | void
+
+      autocomplete?(
+        c: ApplicationCommandAutocompleteContext<O>
+      ): APIInteractionResponse | Promise<APIInteractionResponse>
     }
-  | Autocomplete<O>
+  // | Autocomplete<O>
 
 export type ContextMenuHandler<
   T extends RESTPostAPIContextMenuApplicationCommandsJSONBody,

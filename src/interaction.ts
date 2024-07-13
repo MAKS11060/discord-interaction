@@ -216,7 +216,62 @@ export const createHandler = async (commands: Command[]) => {
     }
 
     if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-      const c = new ApplicationCommandAutocompleteContext()
+      if (interaction.data.type !== ApplicationCommandType.ChatInput) {
+        return unknownCommand('commandAutocomplete handler is undefined')
+      }
+
+      // console.log(executionTree)
+      for (const option of interaction.data.options) {
+        if (
+          option.type === ApplicationCommandOptionType.Subcommand ||
+          option.type === ApplicationCommandOptionType.SubcommandGroup
+        ) {
+          for (const option2 of option.options ?? []) {
+            if (option2.type === ApplicationCommandOptionType.Subcommand) {
+              // l2
+              const c = new ApplicationCommandAutocompleteContext(
+                interaction,
+                associateBy(
+                  (option2.options as APIApplicationCommandInteractionDataBasicOption[]) ?? [],
+                  (el) => el.name
+                )
+              )
+              return (
+                executionTree[interaction.data.name][option.name][option2.name]?.autocomplete(c) ??
+                unknownCommand('commandAutocomplete handler is undefined')
+              )
+            }
+
+            // l1
+            const c = new ApplicationCommandAutocompleteContext(
+              interaction,
+              associateBy(
+                (option.options as APIApplicationCommandInteractionDataBasicOption[]) ?? [],
+                (el) => el.name
+              )
+            )
+            return (
+              executionTree[interaction.data.name][option.name]?.autocomplete(c) ??
+              unknownCommand('commandAutocomplete handler is undefined')
+            )
+          }
+          return unknownCommand('commandAutocomplete handler is undefined')
+        }
+
+        // l0
+        const c = new ApplicationCommandAutocompleteContext(
+          interaction,
+          associateBy(
+            (interaction.data.options as APIApplicationCommandInteractionDataBasicOption[]) ?? [],
+            (el) => el.name
+          )
+        )
+        return (
+          executionTree[interaction.data.name]?.autocomplete(c) ??
+          unknownCommand('commandAutocomplete handler is undefined')
+        )
+      }
+
       return unknownCommand('commandAutocomplete handler is undefined')
     }
 

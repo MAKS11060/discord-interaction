@@ -5,6 +5,9 @@ import {
   InteractionType,
   type APIApplicationCommandAutocompleteResponse,
   type APIApplicationCommandInteractionDataBasicOption,
+  type APIApplicationCommandInteractionDataIntegerOption,
+  type APIApplicationCommandInteractionDataNumberOption,
+  type APIApplicationCommandInteractionDataStringOption,
   type APIApplicationCommandOption,
   type APIAttachment,
   type APICommandAutocompleteInteractionResponseCallbackData,
@@ -25,7 +28,7 @@ import {
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
   type RESTPostAPIContextMenuApplicationCommandsJSONBody,
   type RESTPostAPIInteractionCallbackJSONBody,
-  type RESTPostAPIWebhookWithTokenResult
+  type RESTPostAPIWebhookWithTokenResult,
 } from 'discord-api-types/v10'
 import type {OptionToObject} from './types.ts'
 
@@ -35,6 +38,16 @@ type PickType<
   Type extends ApplicationCommandOptionType
 > = T extends T & {
   type: Type
+}
+  ? T
+  : never
+
+type PickTypeWithAutocomplete<
+  T extends APIApplicationCommandOption,
+  Type extends ApplicationCommandOptionType
+> = T extends T & {
+  type: Type
+  autocomplete: true
 }
   ? T
   : never
@@ -62,7 +75,7 @@ export class ApplicationCommandContext<
 
   /** Get initiator user */
   get user(): APIUser {
-    return this.interaction?.user ?? this.interaction.member?.user as APIUser
+    return this.interaction?.user ?? (this.interaction.member?.user as APIUser)
   }
 
   /**
@@ -112,7 +125,7 @@ export class ApplicationCommandContext<
     O extends {name: K} ? O : never,
     APIInteractionDataOptionBase<ApplicationCommandOptionType.Boolean, boolean>
   > {
-    if (this.payload[name] && this.payload[name].type === ApplicationCommandOptionType.Integer) {
+    if (this.payload[name] && this.payload[name].type === ApplicationCommandOptionType.Boolean) {
       return this.payload[name] as APIInteractionDataOptionBase<
         ApplicationCommandOptionType.Boolean,
         boolean
@@ -295,12 +308,72 @@ export class ApplicationCommandContext<
   }
 }
 
-// TODO
-export class ApplicationCommandAutocompleteContext<T extends APIApplicationCommandOption> {
-  constructor() {}
+export class ApplicationCommandAutocompleteContext<O extends APIApplicationCommandOption> {
+  constructor(
+    readonly interaction: APIInteraction,
+    readonly payload: Record<string, APIApplicationCommandInteractionDataBasicOption>
+  ) {}
 
-  getOption() {}
+  /**
+   * Get `String`
+   */
+  getString<K extends PickTypeWithAutocomplete<O, ApplicationCommandOptionType.String>['name']>(
+    name: K
+  ): isRequiredOption<
+    O extends {name: K} ? O : never,
+    APIApplicationCommandInteractionDataStringOption
+  > {
+    if (this.payload[name] && this.payload[name].type === ApplicationCommandOptionType.String) {
+      return this.payload[name] as APIInteractionDataOptionBase<
+        ApplicationCommandOptionType.String,
+        string
+      >
+    }
 
+    return null!
+  }
+
+  /**
+   * Get `Integer`
+   */
+  getInteger<K extends PickTypeWithAutocomplete<O, ApplicationCommandOptionType.Integer>['name']>(
+    name: K
+  ): isRequiredOption<
+    O extends {name: K} ? O : never,
+    APIApplicationCommandInteractionDataIntegerOption
+  > {
+    if (this.payload[name] && this.payload[name].type === ApplicationCommandOptionType.Integer) {
+      return this.payload[name] as APIInteractionDataOptionBase<
+        ApplicationCommandOptionType.Integer,
+        number
+      >
+    }
+
+    return null!
+  }
+
+  /**
+   * Get `Number`
+   */
+  getNumber<K extends PickTypeWithAutocomplete<O, ApplicationCommandOptionType.Number>['name']>(
+    name: K
+  ): isRequiredOption<
+    O extends {name: K} ? O : never,
+    APIApplicationCommandInteractionDataNumberOption
+  > {
+    if (this.payload[name] && this.payload[name].type === ApplicationCommandOptionType.Number) {
+      return this.payload[name] as APIInteractionDataOptionBase<
+        ApplicationCommandOptionType.Number,
+        number
+      >
+    }
+
+    return null!
+  }
+
+  /**
+   * autocomplete result
+   */
   autocomplete(
     data: APICommandAutocompleteInteractionResponseCallbackData
   ): APIApplicationCommandAutocompleteResponse {
@@ -308,6 +381,13 @@ export class ApplicationCommandAutocompleteContext<T extends APIApplicationComma
       type: InteractionResponseType.ApplicationCommandAutocompleteResult,
       data,
     }
+  }
+
+  /**
+   * Return empty `autocompletion`
+   */
+  pass() {
+    return this.autocomplete({choices: []})
   }
 }
 
