@@ -37,7 +37,7 @@
 
 export {defineCommand, discordInteraction} from './src/interaction.ts'
 export {importKeyRaw} from './src/lib/ed25519.ts'
-export {DateTimeFormat, format} from './src/lib/message-format.ts'
+export {DateTimeFormat, Format} from './src/lib/message-format.ts'
 
 // export type {
 //   APIInteraction,
@@ -47,4 +47,3 @@ export {DateTimeFormat, format} from './src/lib/message-format.ts'
 //   ComponentType,
 //   TextInputStyle
 // } from 'discord-api-types/v10'
-

@@ -8,7 +8,7 @@ import {
   type APIMessageActionRowComponent,
 } from 'discord-api-types/v10'
 import {ulid} from 'jsr:@std/ulid'
-import {defineCommand, format} from '../mod.ts'
+import {Format, defineCommand} from '../mod.ts'
 
 const test1 = defineCommand({
   name: 'test1',
@@ -344,7 +344,7 @@ const all2 = defineCommand({
     sub: () => ({
       command: (c) => {
         console.log(c.getString('sr'))
-        return c.reply({content: `ok ${format.timestamp(new Date())}`})
+        return c.reply({content: `ok ${Format.timestamp(new Date())}`})
       },
     }),
   },
@@ -358,7 +358,7 @@ const hello = defineCommand({
     return {
       command: (c) => {
         return c.reply({
-          content: `Hello ${format.user(c.user.id)}`,
+          content: `Hello ${Format.user(c.user.id)}`,
         })
       },
     }

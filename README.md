@@ -34,14 +34,14 @@ deno install -Arfg -n deploy-discord --unstable-kv jsr:@maks11060/discord-intera
 ```
 \* Works if the import in `commands.ts` starts with '`jsr:`'
 
-`import {defineCommand, format} from 'jsr:@maks11060/discord-interactions'`
+`import {defineCommand, Format} from 'jsr:@maks11060/discord-interactions'`
 
 ## Usage
 
 Define commands:
 ```ts
 // commands.ts
-import {defineCommand, format} from '@maks11060/discord-interactions'
+import {defineCommand, Format} from '@maks11060/discord-interactions'
 
 const hello = defineCommand({
   name: 'hello',
@@ -51,7 +51,7 @@ const hello = defineCommand({
     return {
       command: (c) => {
         return c.reply({
-          content: `Hello ${format.user(c.user.id)}`
+          content: `Hello ${Format.user(c.user.id)}`
         })
       },
     }

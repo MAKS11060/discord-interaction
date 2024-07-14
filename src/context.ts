@@ -1,6 +1,4 @@
 import {
-  APIModalSubmitDMInteraction,
-  APIModalSubmitInteraction,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   InteractionResponseType,
@@ -27,6 +25,7 @@ import {
   type APIModalInteractionResponse,
   type APIModalInteractionResponseCallbackData,
   type APIModalSubmission,
+  type APIModalSubmitInteraction,
   type APIRole,
   type APIUser,
   type ComponentType,
