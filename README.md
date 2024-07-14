@@ -82,7 +82,7 @@ import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions'
 import {commands} from './commands.ts'
 
 const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
-const interaction = discordInteraction(key, /* commands */)
+const interaction = await discordInteraction(key, commands)
 
 Deno.serve(req => {
   const uri = new URL(req.url)
