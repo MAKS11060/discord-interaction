@@ -19,7 +19,7 @@
 import type {APIInteraction} from 'discord-api-types/v10'
 import type {Handler} from 'hono'
 import {createFactory} from 'hono/factory'
-import {createHandler} from '../interaction.ts'
+import {createHandler, type CreateHandlerOptions} from '../interaction.ts'
 import {verifyRequestSignature as verifyRequest} from '../lib/ed25519.ts'
 import type {Command} from '../types.ts'
 
@@ -61,9 +61,10 @@ const verifyRequestSignature = (key: CryptoKey) => {
  */
 export const discordInteraction = async (
   key: CryptoKey,
-  commands: Command[]
+  commands: Command[],
+  options?: CreateHandlerOptions
 ): Promise<Handler[]> => {
-  const handler = await createHandler(commands)
+  const handler = await createHandler(commands, options)
 
   const interactionHandler = createFactory().createMiddleware(async (c) => {
     const interaction = await c.req.json<APIInteraction>()

@@ -70,7 +70,7 @@ export type CommandHandler<
 
       messageComponent?(
         c: MessageComponentContext
-      ): APIInteractionResponse | Promise<APIInteractionResponse>
+      ): APIInteractionResponse | Promise<APIInteractionResponse> | void
       /**
        * Handle `modal` submission
        *

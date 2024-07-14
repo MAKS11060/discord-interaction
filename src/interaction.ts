@@ -23,6 +23,15 @@ import {verifyRequestSignature} from './lib/ed25519.ts'
 import {commandSchema, userOrMessageCommandSchema} from './schema.ts'
 import type {Command, DefineHandler} from './types.ts'
 
+export interface CreateHandlerOptions {
+  /**
+   * Fire all messageComponent handlers
+   */
+  manualMessageComponentHandler?: boolean
+}
+
+type HandlerName = 'messageComponent' | 'modalSubmit'
+
 const unknownCommand = (text?: string): APIInteractionResponse => {
   return {
     type: InteractionResponseType.ChannelMessageWithSource,
@@ -108,8 +117,40 @@ const commandsInit = async (init: Command[]) => {
   return {executionTree, commandsTree}
 }
 
-export const createHandler = async (commands: Command[]) => {
+// TODO: optimize code. use iterator
+const getExecutionHandlers = (executionTree: Record<string, any>, name: HandlerName) => {
+  let result = []
+
+  for (const key1 in executionTree) {
+    const l1 = executionTree[key1]
+    if (l1[name]) {
+      result.push(l1[name])
+    } else {
+      for (const key2 in l1) {
+        const l2 = l1[key2]
+        if (l2[name]) {
+          result.push(l2[name])
+        } else {
+          for (const key3 in l2) {
+            const l3 = l2[key3]
+            if (l3[name]) {
+              result.push(l3[name])
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return result
+}
+
+export const createHandler = async (commands: Command[], options?: CreateHandlerOptions) => {
   const {executionTree, commandsTree} = await commandsInit(commands)
+
+  options ??= {}
+  options.manualMessageComponentHandler ??= false
+  // options.manualMessageComponentHandler ??= true
 
   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
     if (interaction.type === InteractionType.Ping) {
@@ -212,6 +253,14 @@ export const createHandler = async (commands: Command[]) => {
         )
       }
 
+      // handle messageComponent called from any messageComponent
+      if (options.manualMessageComponentHandler) {
+        for (const executionHandler of getExecutionHandlers(executionTree, 'messageComponent')) {
+          const res = await executionHandler(c)
+          if (res) return res
+        }
+      }
+
       return unknownCommand('messageComponent handler is undefined')
     }
 
@@ -277,7 +326,7 @@ export const createHandler = async (commands: Command[]) => {
 
     if (interaction.type === InteractionType.ModalSubmit) {
       // Discord did not provide interaction metadata
-      const c = new ModalContext(interaction.data)
+      const c = new ModalContext(interaction, interaction.data)
       const metadata = interaction.message?.interaction_metadata as
         | (APIMessageInteractionMetadata & {name: string})
         | undefined
@@ -293,29 +342,34 @@ export const createHandler = async (commands: Command[]) => {
 
       // best solution so far
       // fire all modalSubmit handler. if use ApplicationCommandContext.modal()
-      for (const key1 in executionTree) {
-        const l1 = executionTree[key1]
-        if (l1?.modalSubmit) {
-          const res = await l1.modalSubmit(c)
-          if (res) return res
-        } else {
-          for (const key2 in l1) {
-            const l2 = l1[key2]
-            if (l2?.modalSubmit) {
-              const res = await l2.modalSubmit(c)
-              if (res) return res
-            } else {
-              for (const key3 in l2) {
-                const l3 = l2[key3]
-                if (l3?.modalSubmit) {
-                  const res = await l3.modalSubmit(c)
-                  if (res) return res
-                }
-              }
-            }
-          }
-        }
+      for (const handler of getExecutionHandlers(executionTree, 'modalSubmit')) {
+        const res = await handler(c)
+        if (res) return res
       }
+
+      // for (const key1 in executionTree) {
+      //   const l1 = executionTree[key1]
+      //   if (l1?.modalSubmit) {
+      //     const res = await l1.modalSubmit(c)
+      //     if (res) return res
+      //   } else {
+      //     for (const key2 in l1) {
+      //       const l2 = l1[key2]
+      //       if (l2?.modalSubmit) {
+      //         const res = await l2.modalSubmit(c)
+      //         if (res) return res
+      //       } else {
+      //         for (const key3 in l2) {
+      //           const l3 = l2[key3]
+      //           if (l3?.modalSubmit) {
+      //             const res = await l3.modalSubmit(c)
+      //             if (res) return res
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
 
       return unknownCommand('modalSubmit handler is undefined')
     }
@@ -350,9 +404,10 @@ export const createHandler = async (commands: Command[]) => {
  */
 export const discordInteraction = async (
   key: CryptoKey,
-  commands: Command[]
+  commands: Command[],
+  options?: CreateHandlerOptions
 ): Promise<(req: Request) => Promise<Response>> => {
-  const handler = await createHandler(commands)
+  const handler = await createHandler(commands, options)
 
   return async (req: Request): Promise<Response> => {
     const invalid = await verifyRequestSignature(req, key)

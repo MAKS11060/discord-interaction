@@ -26,7 +26,7 @@ const test1 = defineCommand({
                 {
                   type: ComponentType.Button,
                   style: ButtonStyle.Primary,
-                  custom_id: 'btn',
+                  custom_id: 'test1-btn',
                   label: 'Btn 1',
                 },
               ],
@@ -35,7 +35,9 @@ const test1 = defineCommand({
         })
       },
       messageComponent: (c) => {
-        return c.reply({content: '1'})
+        if (c.customId === 'test1-btn') {
+          return c.reply({content: '1'})
+        }
       },
     }
   },
@@ -69,7 +71,7 @@ const test2 = defineCommand({
                   {
                     type: ComponentType.Button,
                     style: ButtonStyle.Primary,
-                    custom_id: 'btn',
+                    custom_id: 'test2-btn',
                     label: 'Open modal',
                   },
                 ],
@@ -78,23 +80,24 @@ const test2 = defineCommand({
           })
         },
         messageComponent: (c) => {
-          return c.modal({
-            title: 'modal',
-            custom_id: 'modal',
-            components: [
-              {
-                type: ComponentType.ActionRow,
-                components: [
-                  {
-                    type: ComponentType.TextInput,
-                    custom_id: 'input',
-                    label: 'Input',
-                    style: TextInputStyle.Paragraph,
-                  },
-                ],
-              },
-            ],
-          })
+          if (c.customId === 'test2-input')
+            return c.modal({
+              title: 'modal',
+              custom_id: 'modal',
+              components: [
+                {
+                  type: ComponentType.ActionRow,
+                  components: [
+                    {
+                      type: ComponentType.TextInput,
+                      custom_id: 'test2-input',
+                      label: 'Input',
+                      style: TextInputStyle.Paragraph,
+                    },
+                  ],
+                },
+              ],
+            })
         },
         modalSubmit: (c) => {
           console.log('modal')
@@ -141,7 +144,7 @@ const test3 = defineCommand({
                   {
                     type: ComponentType.Button,
                     style: ButtonStyle.Primary,
-                    custom_id: 'btn',
+                    custom_id: 'test3-btn',
                     label: 'Btn 1',
                   },
                 ],
@@ -150,22 +153,23 @@ const test3 = defineCommand({
           })
         },
         messageComponent: (c) => {
-          return c.replyUpdate({
-            content: '3',
-            components: [
-              {
-                type: ComponentType.ActionRow,
-                components: [
-                  {
-                    type: ComponentType.Button,
-                    style: ButtonStyle.Primary,
-                    custom_id: 'btn',
-                    label: 'Btn 2',
-                  },
-                ],
-              },
-            ],
-          })
+          if (c.customId === 'test3-btn')
+            return c.replyUpdate({
+              content: '3',
+              components: [
+                {
+                  type: ComponentType.ActionRow,
+                  components: [
+                    {
+                      type: ComponentType.Button,
+                      style: ButtonStyle.Primary,
+                      custom_id: 'test3-btn',
+                      label: 'Btn 2',
+                    },
+                  ],
+                },
+              ],
+            })
         },
         modalSubmit: (c) => {
           console.log('modal 2')
@@ -530,13 +534,19 @@ const messageComponentTest = defineCommand({
             type: ComponentType.Button,
             style: ButtonStyle.Danger,
             label: 'reset',
-            custom_id: 'reset',
+            custom_id: JSON.stringify(['reset']),
           },
           {
             type: ComponentType.Button,
             style: ButtonStyle.Success,
             label: 'clicks: 0',
-            custom_id: '0',
+            custom_id: JSON.stringify(['click', 0]),
+          },
+          {
+            type: ComponentType.Button,
+            style: ButtonStyle.Secondary,
+            label: 'clone',
+            custom_id: JSON.stringify(['clone', 0]),
           },
         ],
       },
@@ -548,32 +558,49 @@ const messageComponentTest = defineCommand({
       },
 
       messageComponent(c) {
-        if (c.customId === 'reset') {
+        const [id, counter] = JSON.parse(c.customId)
+
+        if (id === 'reset') {
           return c.replyUpdate({components: initialState})
         }
 
-        const clicks = Number(c.customId) + 1
-        return c.replyUpdate({
-          components: [
-            {
-              type: ComponentType.ActionRow,
-              components: [
-                {
-                  type: ComponentType.Button,
-                  style: ButtonStyle.Danger,
-                  label: 'reset',
-                  custom_id: 'reset',
-                },
-                {
-                  type: ComponentType.Button,
-                  style: ButtonStyle.Success,
-                  label: `clicks: ${clicks}`,
-                  custom_id: `${clicks}`,
-                },
-              ],
-            },
-          ],
-        })
+        if (id === 'clone') {
+          // copy current component and create new message
+          return c.reply({
+            components: c.interaction.message.components,
+          })
+        }
+
+        if (id === 'click') {
+          const clicks = Number(counter) + 1
+          return c.replyUpdate({
+            components: [
+              {
+                type: ComponentType.ActionRow,
+                components: [
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Danger,
+                    label: 'reset',
+                    custom_id: JSON.stringify(['reset']),
+                  },
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Success,
+                    label: `clicks: ${clicks}`,
+                    custom_id: JSON.stringify(['click', clicks]),
+                  },
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Secondary,
+                    label: 'clone',
+                    custom_id: JSON.stringify(['clone']),
+                  },
+                ],
+              },
+            ],
+          })
+        }
       },
     }
   },

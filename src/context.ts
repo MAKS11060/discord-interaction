@@ -1,4 +1,6 @@
 import {
+  APIModalSubmitDMInteraction,
+  APIModalSubmitInteraction,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   InteractionResponseType,
@@ -470,7 +472,7 @@ export class MessageComponentContext {
 
 // TODO
 export class ModalContext {
-  constructor(readonly data: APIModalSubmission) {}
+  constructor(readonly interaction: APIModalSubmitInteraction, readonly data: APIModalSubmission) {}
 
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
     return {
