@@ -6,7 +6,7 @@ import type {
   APIInteractionResponse,
   RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
-  RESTPostAPIContextMenuApplicationCommandsJSONBody
+  RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from 'discord-api-types/v10'
 import type {
   ApplicationCommandAutocompleteContext,
@@ -54,42 +54,81 @@ export type OptionToObject<T extends APIApplicationCommandOption> = {
 export type CommandHandler<
   T extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandSubcommandOption,
   O extends APIApplicationCommandOption
-> = (command: OptionToObject<O>) =>
-  | {
-      /**
-       * @example
-       * ```ts
-       * {
-       *   command: (c) => c.reply({content: 'Ok'})
-       * }
-       * ```
-       */
-      command(
-        c: ApplicationCommandContext<T, O>
-      ): APIInteractionResponse | Promise<APIInteractionResponse>
+> = (command: OptionToObject<O>) => {
+  /**
+   * @example
+   * ```ts
+   * command(c) {
+   *   return c.reply({content: 'ok'})
+   * }
+   * ```
+   */
+  command(
+    c: ApplicationCommandContext<T, O>
+  ): APIInteractionResponse | Promise<APIInteractionResponse>
 
-      messageComponent?(
-        c: MessageComponentContext
-      ): APIInteractionResponse | Promise<APIInteractionResponse> | void
-      /**
-       * Handle `modal` submission
-       *
-       * @example
-       * ```ts
-       * modalSubmit: (c) => {
-       *   if (c.data.custom_id === 'input') {
-       *     return c.reply({content: 'modal'})
-       *   }
-       * }
-       * ```
-       */
-      modalSubmit?(c: ModalContext): APIInteractionResponse | Promise<APIInteractionResponse> | void
+  /**
+   * Handle `messageComponent`
+   *
+   * @example
+   * ```ts
+   * messageComponent(c) {
+   *   return c.replyUpdate({
+   *     components: [
+   *       {
+   *         type: ComponentType.ActionRow,
+   *         components: [
+   *           {
+   *             type: ComponentType.Button,
+   *             style: ButtonStyle.Success,
+   *             label: `btn`,
+   *             custom_id: JSON.stringify(['btn', btn]),
+   *           }
+   *         ],
+   *       },
+   *     ],
+   *   })
+   * }
+   * ```
+   */
+  messageComponent?(
+    c: MessageComponentContext
+  ): APIInteractionResponse | Promise<APIInteractionResponse> | void
 
-      autocomplete?(
-        c: ApplicationCommandAutocompleteContext<O>
-      ): APIInteractionResponse | Promise<APIInteractionResponse>
-    }
-  // | Autocomplete<O>
+  /**
+   * Handle `modal` submission
+   *
+   * @example
+   * ```ts
+   * modalSubmit(c) {
+   *   if (c.data.custom_id === 'input') {
+   *     return c.reply({content: 'modal'})
+   *   }
+   * }
+   * ```
+   */
+  modalSubmit?(c: ModalContext): APIInteractionResponse | Promise<APIInteractionResponse> | void
+
+  /**
+   * Handle `autocomplete`
+   *
+   * @example
+   * ```ts
+   * autocomplete(c) {
+   *   return c.autocomplete({
+   *     choices: [
+   *       {name: 'hello', value: 'hello'},
+   *       {name: 'autocomplete', value: 'autocomplete'},
+   *     ],
+   *   })
+   * }
+   * ```
+   */
+  autocomplete?(
+    c: ApplicationCommandAutocompleteContext<O>
+  ): APIInteractionResponse | Promise<APIInteractionResponse>
+}
+// | Autocomplete<O>
 
 export type ContextMenuHandler<
   T extends RESTPostAPIContextMenuApplicationCommandsJSONBody,
