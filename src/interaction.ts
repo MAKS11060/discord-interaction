@@ -15,9 +15,10 @@ import {
 import {
   ApplicationCommandAutocompleteContext,
   ApplicationCommandContext,
-  ContextMenuCommandContext,
   MessageComponentContext,
+  MessageMenuCommandContext,
   ModalContext,
+  UserMenuCommandContext,
 } from './context.ts'
 import {verifyRequestSignature} from './lib/ed25519.ts'
 import {commandSchema, userOrMessageCommandSchema} from './schema.ts'
@@ -150,7 +151,6 @@ export const createHandler = async (commands: Command[], options?: CreateHandler
 
   options ??= {}
   options.manualMessageComponentHandler ??= false
-  // options.manualMessageComponentHandler ??= true
 
   return async (interaction: APIInteraction): Promise<APIInteractionResponse> => {
     if (interaction.type === InteractionType.Ping) {
@@ -220,7 +220,7 @@ export const createHandler = async (commands: Command[], options?: CreateHandler
       }
 
       if (interaction.data.type === ApplicationCommandType.User) {
-        const c = new ContextMenuCommandContext(executionTree[interaction.data.name])
+        const c = new UserMenuCommandContext(interaction, executionTree[interaction.data.name])
         return (
           executionTree[interaction.data.name]?.command(c) ??
           unknownCommand('command handler is undefined')
@@ -228,7 +228,7 @@ export const createHandler = async (commands: Command[], options?: CreateHandler
       }
 
       if (interaction.data.type === ApplicationCommandType.Message) {
-        const c = new ContextMenuCommandContext(executionTree[interaction.data.name])
+        const c = new MessageMenuCommandContext(interaction, executionTree[interaction.data.name])
         return (
           executionTree[interaction.data.name]?.command(c) ??
           unknownCommand('command handler is undefined')

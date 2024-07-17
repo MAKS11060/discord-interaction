@@ -5,6 +5,7 @@ import {
   InteractionType,
   type APIApplicationCommandAutocompleteInteraction,
   type APIApplicationCommandAutocompleteResponse,
+  type APIApplicationCommandInteraction,
   type APIApplicationCommandInteractionDataBasicOption,
   type APIApplicationCommandInteractionDataIntegerOption,
   type APIApplicationCommandInteractionDataNumberOption,
@@ -12,7 +13,6 @@ import {
   type APIApplicationCommandOption,
   type APIAttachment,
   type APICommandAutocompleteInteractionResponseCallbackData,
-  type APIInteraction,
   type APIInteractionDataOptionBase,
   type APIInteractionDataResolvedChannel,
   type APIInteractionDataResolvedGuildMember,
@@ -21,6 +21,7 @@ import {
   type APIInteractionResponseDeferredChannelMessageWithSource,
   type APIInteractionResponseDeferredMessageUpdate,
   type APIInteractionResponseUpdateMessage,
+  type APIMessage,
   type APIMessageComponentInteraction,
   type APIModalInteractionResponse,
   type APIModalInteractionResponseCallbackData,
@@ -30,7 +31,6 @@ import {
   type APIUser,
   type ComponentType,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
-  type RESTPostAPIContextMenuApplicationCommandsJSONBody,
   type RESTPostAPIInteractionCallbackJSONBody,
   type RESTPostAPIWebhookWithTokenResult,
 } from 'discord-api-types/v10'
@@ -63,21 +63,24 @@ type isRequiredOption<T extends APIApplicationCommandOption, R> = T extends {req
 // TODO
 // type extractChoices<T extends APIApplicationCommandOptionChoice> = T['name']
 
+/**
+ * Represents the context of an application command interaction.
+ */
 export class ApplicationCommandContext<
   C extends RESTPostAPIChatInputApplicationCommandsJSONBody | APIApplicationCommandOption,
   O extends APIApplicationCommandOption
 > {
-  // r: C = {} as any
   constructor(
     /** Get raw interaction data */
-    readonly interaction: APIInteraction,
+    readonly interaction: APIApplicationCommandInteraction,
     readonly options: OptionToObject<O>,
     readonly payload: Record<string, APIApplicationCommandInteractionDataBasicOption>
-  ) {
-    // console.log({options, payload})
-  }
+  ) {}
 
-  /** Get initiator user */
+  /**
+   * Gets the user object for the application command interaction.
+   * @returns {APIUser} The user object.
+   */
   get user(): APIUser {
     return this.interaction?.user ?? (this.interaction.member?.user as APIUser)
   }
@@ -267,7 +270,11 @@ export class ApplicationCommandContext<
     return null!
   }
 
-  /** Send a new message in response */
+  /**
+   * Sends a new message in response to the application command interaction.
+   * @param {APIInteractionResponseCallbackData} data - The data for the new message.
+   * @returns {APIInteractionResponseChannelMessageWithSource} The interaction response object.
+   */
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -275,7 +282,11 @@ export class ApplicationCommandContext<
     }
   }
 
-  /** Replaces the current message */
+  /**
+   * Replaces the current message with a new message in response to the application command interaction.
+   * @param {APIInteractionResponseCallbackData} data - The data for the new message.
+   * @returns {APIInteractionResponseUpdateMessage} The interaction response object.
+   */
   replyUpdate(data: APIInteractionResponseCallbackData): APIInteractionResponseUpdateMessage {
     return {
       type: InteractionResponseType.UpdateMessage,
@@ -302,7 +313,10 @@ export class ApplicationCommandContext<
   }
 
   /**
-   * Create `modal` window. WARNING calls all modal window handlers.
+   * Creates a modal window in response to the application command interaction.
+   * WARNING calls all modal window handlers.
+   * @param {APIModalInteractionResponseCallbackData} data - The data for the modal window.
+   * @returns {APIModalInteractionResponse} The interaction response object.
    */
   modal(data: APIModalInteractionResponseCallbackData): APIModalInteractionResponse {
     return {
@@ -491,20 +505,65 @@ export class ModalContext {
   }
 }
 
-export class ContextMenuCommandContext<
-  C extends RESTPostAPIContextMenuApplicationCommandsJSONBody
-> {
-  command: C = {} as any
-  constructor(command: C) {
-    this.command = command
-  }
+class MenuCommandContext {
+  constructor(
+    readonly interaction: APIApplicationCommandInteraction,
+    readonly payload: Record<string, APIApplicationCommandInteractionDataBasicOption>
+  ) {}
 
-  /** Send a new message in response */
+  /**
+   * Sends a new message in response to the context menu command interaction.
+   * @param {APIInteractionResponseCallbackData} data - The data for the new message.
+   * @returns {APIInteractionResponseChannelMessageWithSource} The interaction response object.
+   */
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data,
     }
+  }
+}
+
+/**
+ * Represents the context of a user context menu command interaction.
+ */
+export class UserMenuCommandContext extends MenuCommandContext {
+  /**
+   * Gets the user object for a user context menu command interaction.
+   * @returns {APIUser} The user object.
+   */
+  getUser(): APIUser {
+    const {type, data} = this.interaction
+    if (type !== InteractionType.ApplicationCommand) return null!
+    if (data.type !== ApplicationCommandType.User) return null!
+    return data.resolved.users[data.target_id]
+  }
+
+  /**
+   * Gets the guild member object for a user context menu command interaction.
+   * @returns {APIInteractionDataResolvedGuildMember | void} Returns the guild member object only if the interaction is a user context menu command interaction in a guild and the guild member object is present.
+   */
+  getMember(): APIInteractionDataResolvedGuildMember | void {
+    const {type, data} = this.interaction
+    if (type !== InteractionType.ApplicationCommand) return null!
+    if (data.type !== ApplicationCommandType.User) return null!
+    return data.resolved.members?.[data.target_id]
+  }
+}
+
+/**
+ * Represents the context of a message context menu command interaction.
+ */
+export class MessageMenuCommandContext extends MenuCommandContext {
+  /**
+   * Gets the message object for a message context menu command interaction.
+   * @returns {APIMessage} The message object, or null if the interaction is not a message context menu command interaction.
+   */
+  getMessage(): APIMessage {
+    const {type, data} = this.interaction
+    if (type !== InteractionType.ApplicationCommand) return null!
+    if (data.type !== ApplicationCommandType.Message) return null!
+    return data.resolved.messages[data.target_id]
   }
 }
 

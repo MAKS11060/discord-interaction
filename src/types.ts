@@ -4,6 +4,7 @@ import type {
   APIApplicationCommandSubcommandGroupOption,
   APIApplicationCommandSubcommandOption,
   APIInteractionResponse,
+  ApplicationCommandType,
   RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
@@ -11,9 +12,10 @@ import type {
 import type {
   ApplicationCommandAutocompleteContext,
   ApplicationCommandContext,
-  ContextMenuCommandContext,
   MessageComponentContext,
+  MessageMenuCommandContext,
   ModalContext,
+  UserMenuCommandContext,
 } from './context.ts'
 
 /** `{} | {} => {} & {}` */
@@ -93,7 +95,7 @@ export type CommandHandler<
    */
   messageComponent?(
     c: MessageComponentContext
-  ): APIInteractionResponse | Promise<APIInteractionResponse> | void
+  ): APIInteractionResponse | Promise<APIInteractionResponse | void> | void
 
   /**
    * Handle `modal` submission
@@ -130,12 +132,17 @@ export type CommandHandler<
 }
 // | Autocomplete<O>
 
-export type ContextMenuHandler<
-  T extends RESTPostAPIContextMenuApplicationCommandsJSONBody,
-  O extends APIApplicationCommandOption = any
-> = (command: OptionToObject<O>) => {
-  command(c: ContextMenuCommandContext<T>): APIInteractionResponse | Promise<APIInteractionResponse>
+type UserMenuCommandContextHandler /* <
+  T extends RESTPostAPIContextMenuApplicationCommandsJSONBody = any
+> */ = (/* command: T */) => {
+  command(c: UserMenuCommandContext): APIInteractionResponse | Promise<APIInteractionResponse>
 }
+type MessageMenuCommandContextHandler /* <T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> */ =
+  (/* command: T */) => {
+    command(c: MessageMenuCommandContext): APIInteractionResponse | Promise<APIInteractionResponse>
+  }
+
+export type ContextMenuHandler = UserMenuCommandContextHandler | MessageMenuCommandContextHandler
 
 export type CommandSchema<T extends RESTPostAPIChatInputApplicationCommandsJSONBody> =
   T['options'] extends APIApplicationCommandOption[] & EmptyArray<T['options']>
@@ -162,12 +169,26 @@ export type CommandSchema<T extends RESTPostAPIChatInputApplicationCommandsJSONB
       : {[K in T['name']]: CommandHandler<T, never>}
     : {[K in T['name']]: CommandHandler<T, never>}
 
+/*
+export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> = {
+  [K in T['name']]: T['type'] extends ApplicationCommandType.User
+    ? UserMenuCommandContextHandler
+    : T['type'] extends ApplicationCommandType.Message
+    ? MessageMenuCommandContextHandler
+    : never //ContextMenuHandler
+} */
 export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> =
-  {
-    [K in T['name']]: ContextMenuHandler<T>
-  }
+  T['type'] extends ApplicationCommandType.User
+    ? {
+        [K in T['name']]: UserMenuCommandContextHandler
+      }
+    : T['type'] extends ApplicationCommandType.Message
+    ? {
+        [K in T['name']]: MessageMenuCommandContextHandler
+      }
+    : never
 
-export type Handler = CommandHandler<any, any> | ContextMenuHandler<any>
+export type Handler = CommandHandler<any, any> | ContextMenuHandler /* <any> */
 
 type HandlerRecord = Record<string, Handler | Record<string, Handler | Record<string, Handler>>>
 

@@ -9,6 +9,7 @@ import {
 } from 'discord-api-types/v10'
 import {ulid} from 'jsr:@std/ulid'
 import {Format, defineCommand} from '../mod.ts'
+import {DateTimeFormat} from '../src/lib/message-format.ts'
 
 const test1 = defineCommand({
   name: 'test1',
@@ -189,11 +190,21 @@ const test3 = defineCommand({
 
 const test4 = defineCommand({
   type: ApplicationCommandType.User,
-  name: 'test4 s',
+  name: 'test4',
 }).createHandler({
-  'test4 s': () => ({
-    command: (c) => c.reply({content: '1'}),
-  }),
+  test4: () => {
+    return {
+      command: async (c) => {
+        console.log(c.getUser())
+        return c.reply({
+          content: `Call user: ${Format.user(c.getUser().id)} ${Format.timestamp(
+            new Date(),
+            DateTimeFormat.RelativeTime
+          )}`,
+        })
+      },
+    }
+  },
 })
 
 const test5 = defineCommand({
@@ -201,7 +212,9 @@ const test5 = defineCommand({
   name: 'test5',
 }).createHandler({
   test5: () => ({
-    command: (c) => c.reply({content: '1'}),
+    command: (c) => {
+      return c.reply({content: '1'})
+    },
   }),
 })
 
@@ -223,14 +236,16 @@ const test6 = defineCommand({
     },
   ],
 }).createHandler({
-  test6: () => ({
-    command: (c) => {
-      return c.reply({content: '1'})
-    },
-    autocomplete: (c) => {
-      return c.autocomplete({choices: []})
-    },
-  }),
+  test6: () => {
+    return {
+      command: (c) => {
+        return c.reply({content: '1'})
+      },
+      autocomplete: (c) => {
+        return c.autocomplete({choices: []})
+      },
+    }
+  },
 })
 
 const test7 = defineCommand({
@@ -557,7 +572,7 @@ const messageComponentTest = defineCommand({
         return c.reply({components: initialState})
       },
 
-      messageComponent(c) {
+      async messageComponent(c) {
         const [id, counter] = JSON.parse(c.customId)
 
         if (id === 'reset') {
@@ -613,6 +628,7 @@ export const commands = [
   test3,
   test4,
   test5,
+  test6,
   test7,
   all,
   all2,
