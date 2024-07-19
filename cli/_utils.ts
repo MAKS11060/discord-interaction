@@ -104,3 +104,13 @@ export const deleteApplicationsCommands = async (
 
   return res.ok
 }
+
+// TODO: test package.json
+export const cfgFilename = async () => {
+  for (const file of ['deno.jsonc', 'deno.json', 'package.json']) {
+    if (await Deno.lstat(file).catch((err) => (err instanceof Deno.errors.NotFound ? null : err))) {
+      return file
+    }
+  }
+  throw new Error(`notFound config file in ${Deno.cwd()}. aw`)
+}

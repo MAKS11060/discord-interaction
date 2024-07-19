@@ -7,7 +7,7 @@
  *
  * @example Install cli
  * ```bash
- * deno install -Arfg -n deploy-discord --unstable-kv jsr:@maks11060/discord-interactions/cli
+ * deno install -Arfgn deploy-discord --unstable-kv jsr:@maks11060/discord-interactions/cli
  * ```
  *
  * @example Run directly
@@ -32,6 +32,7 @@ import type {
 } from 'npm:discord-api-types@0/v10'
 import type {Command} from '../src/types.ts'
 import {
+  cfgFilename,
   clientId,
   deleteApplicationsCommands,
   getApplicationsCommands,
@@ -46,14 +47,44 @@ if (!import.meta.main) {
 
 const args = parseArgs(Deno.args, {
   string: ['i', 'guild'],
-  boolean: ['h', 'help', 'verbose'],
+  boolean: ['h', 'help', 'verbose', 'spawn-subproc-with-deno-config'],
   alias: {
     h: 'help',
     i: 'guild',
     v: 'verbose',
   },
 })
-// console.log(args)
+
+if (args.verbose) console.log({args})
+if (args.verbose) console.log('config:', await cfgFilename())
+
+if (!args['spawn-subproc-with-deno-config']) {
+  // console.log(Deno.args)
+  const command = new Deno.Command(Deno.execPath(), {
+    args: [
+      //
+      'run',
+      '-A',
+      '-c',
+      // 'deno.jsonc',
+      await cfgFilename(),
+      // 'jsr:@maks11060/discord-interactions/cli',
+      // 'C:/Users/MAKS11060/code/discord-interaction/cli/cli.ts',
+      'https://raw.githubusercontent.com/MAKS11060/discord-interactions/main/cli/cli.ts',
+      '--spawn-subproc-with-deno-config',
+      '--',
+      // './src/commands.ts',
+      ...Deno.args, // pass args
+    ],
+    stdin: 'inherit',
+    stdout: 'inherit',
+  })
+  const c = command.spawn()
+  if (args.verbose) console.log('spawn deno subprocess')
+  const {success, code} = await c.output()
+  if (args.verbose) console.log(success ? 'graceful close' : `exit code ${code}`)
+  Deno.exit(code)
+}
 
 const printOptions = (options: {arg: string; description: string}[], offset = 4) => {
   let padding = 0
@@ -110,7 +141,7 @@ if (args.verbose) {
   for await (const data of kv.list({prefix: []})) {
     console.log(data.key.join(' '), data.value)
   }
-  console.log('KV STORE')
+  console.log('KV STORE END')
 }
 
 const authorize = async () => {
@@ -134,9 +165,11 @@ if (!token) {
 }
 
 const me = await getMe(token)
-if (args.verbose) console.log('authorize', me)
-else
+if (args.verbose) {
+  console.log('authorize', me)
+} else {
   console.log(`authorize: %c${clientId} %c${me.application.name}`, 'color: green;', 'color: blue')
+}
 
 const printCommandsCount = (commands: RESTGetAPIApplicationCommandsResult) => {
   console.log(
