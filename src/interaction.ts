@@ -388,7 +388,7 @@ export const createHandler = async (commands: Command[], options?: CreateHandler
  * @example
  * ```ts
  * import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions'
- * import {commands} from './commands.ts'
+ * import {commands} from './src/commands.ts'
  *
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
  * const interaction = await discordInteraction(key, commands)
@@ -441,15 +441,13 @@ const validateCommand = <T extends RESTPostAPIApplicationCommandsJSONBody>(comma
  *   name: 'hello',
  *   description: 'says hi',
  * }).createHandler({
- *   hello: () => {
- *     return {
- *       command: (c) => {
- *         return c.reply({
- *           content: `Hello ${format.user(c.user.id)}`,
- *         })
- *       },
- *     }
- *   },
+ *   hello: () => ({
+ *     command: (c) => {
+ *       return c.reply({
+ *         content: `Hello ${Format.user(c.user.id)}`,
+ *       })
+ *     },
+ *   }),
  * })
  * ```
  */

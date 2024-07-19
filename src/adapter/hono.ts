@@ -2,15 +2,17 @@
  * @module
  * Adapter for {@link https://hono.dev Hono} framework
  *
- * @example Usage hono framework
+ * @example Usage `Hono` framework
  * ```ts
+ * // main.ts
  * import {Hono} from 'hono'
  * import {discordInteraction, importKeyRaw} from '@maks11060/discord-interactions/hono'
+ * import {commands} from './src/commands.ts'
  *
  * const app = new Hono()
  * const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
  *
- * app.post('/interaction', ...await discordInteraction(key, []))
+ * app.post('/interaction', ...await discordInteraction(key, commands))
  *
  * Deno.serve(app.fetch)
  * ```

@@ -50,15 +50,13 @@ const hello = defineCommand({
   name: 'hello',
   description: 'says hi',
 }).createHandler({
-  hello: () => {
-    return {
-      command: (c) => {
-        return c.reply({
-          content: `Hello ${Format.user(c.user.id)}`
-        })
-      },
-    }
-  },
+  hello: () => ({
+    command: (c) => {
+      return c.reply({
+        content: `Hello ${Format.user(c.user.id)}`,
+      });
+    },
+  }),
 })
 
 export const commands = [hello]
@@ -80,7 +78,7 @@ deploy-discord -h
 // main.ts
 import {Hono} from 'hono'
 import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions/hono'
-import {commands} from './commands.ts'
+import {commands} from './src/commands.ts'
 
 const app = new Hono()
 const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
@@ -90,11 +88,11 @@ app.post('/interaction', ...await discordInteraction(key, commands))
 Deno.serve(app.fetch)
 ```
 
-### Without framework
+### Use web standards api
 ```ts
 // main.ts
 import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions'
-import {commands} from './commands.ts'
+import {commands} from './src/commands.ts'
 
 const key = await importKeyRaw(Deno.env.get('CLIENT_PUBLIC_KEY')!)
 const interaction = await discordInteraction(key, commands)
@@ -156,3 +154,10 @@ const test = defineCommand({
   }),
 })
 ```
+
+|                         Supported Runtime                         |                        Tested                        |
+| :---------------------------------------------------------------: | :--------------------------------------------------: |
+|                        Deno / Deno Deploy                         |                          ✓                           |
+|                         CloudFlare worker                         |                          ?                           |
+|                                Bun                                | x / [bug](https://github.com/oven-sh/bun/pull/12473) |
+| Node + [@hono/node-server](https://github.com/honojs/node-server) |                          ?                           |
