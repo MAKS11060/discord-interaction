@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A --watch
-import '@std/dotenv/load'
+import 'jsr:@std/dotenv@0/load'
 
 import {
   InteractionType,

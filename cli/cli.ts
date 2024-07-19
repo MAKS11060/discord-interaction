@@ -24,9 +24,9 @@
 import {Checkbox} from 'jsr:@cliffy/prompt@1.0.0-rc.5/checkbox'
 import {prompt} from 'jsr:@cliffy/prompt@1.0.0-rc.5/prompt'
 import {Select} from 'jsr:@cliffy/prompt@1.0.0-rc.5/select'
-import {parseArgs} from 'jsr:@std/cli@0/parse-args'
-import {resolve} from 'jsr:@std/path@0/resolve'
-import {toFileUrl} from 'jsr:@std/path@0/to-file-url'
+import {parseArgs} from 'jsr:@std/cli@1/parse-args'
+import {resolve} from 'jsr:@std/path@1/resolve'
+import {toFileUrl} from 'jsr:@std/path@1/to-file-url'
 import type {
   RESTError,
   RESTOAuth2ImplicitAuthorizationURLFragmentResult,
@@ -90,8 +90,8 @@ if (!args['spawn-subproc-with-deno-config']) {
       '-A',
       '-c',
       await cfgFilename(),
-      'jsr:@maks11060/discord-interactions/cli',
-      // 'C:/Users/MAKS11060/code/discord-interaction/cli/cli.ts',
+      // 'jsr:@maks11060/discord-interactions/cli',
+      'C:/Users/MAKS11060/code/discord-interaction/cli/cli.ts',
       // 'https://raw.githubusercontent.com/MAKS11060/discord-interactions/main/cli/cli.ts',
       '--spawn-subproc-with-deno-config',
       '--',

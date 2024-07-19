@@ -1,4 +1,4 @@
-import {Spinner} from 'jsr:@std/cli@0/spinner'
+import {Spinner} from 'jsr:@std/cli@1/spinner'
 import 'jsr:@std/dotenv@0/load'
 import {
   Locale,
@@ -130,7 +130,6 @@ export const printCommandsCount = (commands: RESTGetAPIApplicationCommandsResult
     'color: green'
   )
 }
-
 
 // TODO: test package.json
 export const cfgFilename = async () => {
