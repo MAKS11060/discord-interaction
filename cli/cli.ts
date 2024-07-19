@@ -21,7 +21,9 @@
  * ```
  */
 
-import {Checkbox, Select, prompt} from 'jsr:@cliffy/prompt@1.0.0-rc.5'
+import {Checkbox} from 'jsr:@cliffy/prompt@1.0.0-rc.5/checkbox'
+import {prompt} from 'jsr:@cliffy/prompt@1.0.0-rc.5/prompt'
+import {Select} from 'jsr:@cliffy/prompt@1.0.0-rc.5/select'
 import {parseArgs} from 'jsr:@std/cli@0/parse-args'
 import {resolve} from 'jsr:@std/path@0/resolve'
 import {toFileUrl} from 'jsr:@std/path@0/to-file-url'
@@ -87,11 +89,10 @@ if (!args['spawn-subproc-with-deno-config']) {
       'run',
       '-A',
       '-c',
-      // 'deno.jsonc',
       await cfgFilename(),
-      // 'jsr:@maks11060/discord-interactions/cli',
+      'jsr:@maks11060/discord-interactions/cli',
       // 'C:/Users/MAKS11060/code/discord-interaction/cli/cli.ts',
-      'https://raw.githubusercontent.com/MAKS11060/discord-interactions/main/cli/cli.ts',
+      // 'https://raw.githubusercontent.com/MAKS11060/discord-interactions/main/cli/cli.ts',
       '--spawn-subproc-with-deno-config',
       '--',
       // './src/commands.ts',
@@ -121,7 +122,7 @@ const commands: Command[] = await import(toFileUrl(commandsPath).toString())
 
 if (args.verbose) console.log('commands:', commands)
 
-const kv = await Deno.openKv(args["kv-path"])
+const kv = await Deno.openKv(args['kv-path'])
 if (args.verbose) {
   console.log('KV STORE')
   for await (const data of kv.list({prefix: []})) {
