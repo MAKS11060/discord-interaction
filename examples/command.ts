@@ -219,6 +219,7 @@ const test5 = defineCommand({
 })
 
 const test6 = defineCommand({
+  type: ApplicationCommandType.ChatInput,
   name: 'test6',
   description: 'autocomplete',
   options: [

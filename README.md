@@ -21,26 +21,29 @@ Handle slash command, user and chat command. [Overview of Interactions](https://
 4. Copy the `CLIENT_ID` and `CLIENT_SECRET` from the OAuth2 page of your application's settings and add them to your `.env` file.
 
 ### `.env` file:
-```
+```env
 # Discord application settings
 # CLIENT_ID=        # Required for deploying commands
 # CLIENT_SECRET=    # Required for deploying commands
 CLIENT_PUBLIC_KEY=  # Required for verifying requests
 ```
 
-## Install CLI
-```ps
-deno install -Arfg -n deploy-discord --unstable-kv jsr:@maks11060/discord-interactions/cli
+## Install from [JSR](https://jsr.io/@maks11060/discord-interactions)
+```powershell
+deno add @maks11060/discord-interactions
+deno add npm:discord-api-types
 ```
-\* Works if the import in `commands.ts` starts with '`jsr:`'
 
-`import {defineCommand, Format} from 'jsr:@maks11060/discord-interactions'`
+## Install CLI
+```powershell
+deno install -Arfgn deploy-discord --unstable-kv jsr:@maks11060/discord-interactions/cli
+```
 
 ## Usage
 
 Define commands:
 ```ts
-// commands.ts
+// ./src/commands.ts
 import {defineCommand, Format} from '@maks11060/discord-interactions'
 
 const hello = defineCommand({
@@ -59,11 +62,22 @@ const hello = defineCommand({
 })
 
 export const commands = [hello]
+
+// or use
+// export default [hello]
+```
+
+Run **[CLI](#install-cli)**:
+```powershell
+deploy-discord ./src/commands.ts
+# or use help
+deploy-discord -h
 ```
 
 ### Use [Hono](https://hono.dev)
 
 ```ts
+// main.ts
 import {Hono} from 'hono'
 import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions/hono'
 import {commands} from './commands.ts'
@@ -78,6 +92,7 @@ Deno.serve(app.fetch)
 
 ### Without framework
 ```ts
+// main.ts
 import {importKeyRaw, discordInteraction} from '@maks11060/discord-interactions'
 import {commands} from './commands.ts'
 
@@ -93,7 +108,7 @@ Deno.serve(req => {
 })
 ```
 
-## TODO
+## Features
   - [x] ApplicationCommandContext
     - [x] getter for options
     - [x] reply/replyUpdate
@@ -101,7 +116,43 @@ Deno.serve(req => {
   - [x] ApplicationCommandAutocompleteContext
     - [x] get[string/integer/number]
     - [x] autocomplete()
+    - [x] pass() return empty autocomplete
   - [x] MessageComponentContext
     - [x] getter(type/customId)
+    - [x] optional response support
+    - [x] optional. Support for manual call handling
   - [ ] ModalContext
-  - [x] ContextMenuCommandContext
+    - [x] reply
+    - [ ] deferredReply
+  - [x] MenuCommandContext
+    - [x] reply
+    - [x] UserMenuCommandContext
+      - [x] getUser
+      - [x] getMember(guild only)
+    - [x] MessageMenuCommandContext
+      - [x] getMessage
+  - [x] CLI
+    - [x] resolve imports in deno.json[c]
+    - [ ] * resolve deps in package.json
+
+\* Maybe it works
+
+### Problems
+1. Run the application to cache types from `discord-api-types/v10`
+```ts
+// ./src/commands.ts
+import {defineCommand} from '@maks11060/discord-interactions' // or 'jsr:@maks11060/discord-interactions'
+import {ApplicationCommandType} from 'discord-api-types/v10' // or 'npm:discord-api-types/v10'
+
+const test = defineCommand({
+  type: ApplicationCommandType.ChatInput,
+  name: 'test',
+  description: 'autocomplete',
+}).createHandler({
+  test: () => ({
+    command(c) {
+      return c.reply({content: 'ok'})
+    },
+  }),
+})
+```

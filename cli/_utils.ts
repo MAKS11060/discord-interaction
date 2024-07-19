@@ -105,6 +105,33 @@ export const deleteApplicationsCommands = async (
   return res.ok
 }
 
+export const printOptions = (options: {arg: string; description: string}[], offset = 4) => {
+  let padding = 0
+  for (const option of options) padding = Math.max(padding, option.arg.length)
+  for (const option of options) {
+    console.log(
+      `${''.padEnd(offset, ' ')}%c${option.arg.padEnd(padding + 1, ' ')} %c${option.description}`,
+      'color: blue',
+      'color: inherit'
+    )
+  }
+}
+
+export const printCommandsCount = (commands: RESTGetAPIApplicationCommandsResult) => {
+  console.log(
+    `%cCommands %c${commands.filter((v) => v.type === 1).length}/100%c | User %c${
+      commands.filter((v) => v.type === 2).length
+    }/5%c | Message %c${commands.filter((v) => v.type === 3).length}/5`,
+    'color: blue',
+    'color: green',
+    'color: blue',
+    'color: green',
+    'color: blue',
+    'color: green'
+  )
+}
+
+
 // TODO: test package.json
 export const cfgFilename = async () => {
   for (const file of ['deno.jsonc', 'deno.json', 'package.json']) {

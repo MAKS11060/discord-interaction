@@ -27,7 +27,6 @@ import {resolve} from 'jsr:@std/path@0/resolve'
 import {toFileUrl} from 'jsr:@std/path@0/to-file-url'
 import type {
   RESTError,
-  RESTGetAPIApplicationCommandsResult,
   RESTOAuth2ImplicitAuthorizationURLFragmentResult,
 } from 'npm:discord-api-types@0/v10'
 import type {Command} from '../src/types.ts'
@@ -39,6 +38,8 @@ import {
   getMe,
   getToken,
   postApplicationsCommands,
+  printCommandsCount,
+  printOptions,
 } from './_utils.ts'
 
 if (!import.meta.main) {
@@ -46,18 +47,38 @@ if (!import.meta.main) {
 }
 
 const args = parseArgs(Deno.args, {
-  string: ['i', 'guild'],
+  string: ['i', 'guild', 'kv-path'],
   boolean: ['h', 'help', 'verbose', 'spawn-subproc-with-deno-config'],
   alias: {
     h: 'help',
     i: 'guild',
     v: 'verbose',
+    k: 'kv-path',
   },
 })
 
 if (args.verbose) console.log({args})
 if (args.verbose) console.log('config:', await cfgFilename())
 
+if (args.help || !args._.length) {
+  console.log('%cdeploy-discord Help\n', 'color: green')
+  console.log(
+    '%cUsage: %cdeploy-discord %c./commands.ts\n',
+    'color: blue',
+    'color: green',
+    'color: inherit; text-decoration: underline'
+  )
+  console.log('%cOptions:', 'color: blue')
+  printOptions([
+    {arg: '-i, --guild', description: 'Guild id for deploy commands'},
+    {arg: '-h, --help', description: 'Print help'},
+    {arg: '-v, --verbose', description: 'Show more logs'},
+    {arg: '-k, --kv-path', description: 'Set deno kv store path'},
+  ])
+  Deno.exit(0)
+}
+
+// create subprocess with local deno.json[c] configs
 if (!args['spawn-subproc-with-deno-config']) {
   // console.log(Deno.args)
   const command = new Deno.Command(Deno.execPath(), {
@@ -86,41 +107,6 @@ if (!args['spawn-subproc-with-deno-config']) {
   Deno.exit(code)
 }
 
-const printOptions = (options: {arg: string; description: string}[], offset = 4) => {
-  let padding = 0
-  for (const option of options) padding = Math.max(padding, option.arg.length)
-  for (const option of options) {
-    console.log(
-      `${''.padEnd(offset, ' ')}%c${option.arg.padEnd(padding + 1, ' ')} %c${option.description}`,
-      'color: blue',
-      'color: inherit'
-    )
-  }
-}
-
-const help = `%cdeploy-discord Help
-
-%cUsage: %cdeploy-discord %c./commands.ts
-
-%cOptions:`
-
-if (args.help || !args._.length) {
-  console.log(
-    help,
-    'color: green',
-    'color: blue',
-    'color: green',
-    'color: inherit; text-decoration: underline',
-    'color: blue'
-  )
-  printOptions([
-    {arg: '-i, --guild', description: 'Guild id for deploy commands'},
-    {arg: '-h, --help', description: 'Print help'},
-    {arg: '-v, --verbose', description: 'Show more logs'},
-  ])
-  Deno.exit(0)
-}
-
 const commandsPath = resolve(Deno.cwd(), args._[0].toString()).toString()
 console.log(`load: %c${commandsPath}`, 'color: green;')
 
@@ -135,7 +121,7 @@ const commands: Command[] = await import(toFileUrl(commandsPath).toString())
 
 if (args.verbose) console.log('commands:', commands)
 
-const kv = await Deno.openKv()
+const kv = await Deno.openKv(args["kv-path"])
 if (args.verbose) {
   console.log('KV STORE')
   for await (const data of kv.list({prefix: []})) {
@@ -169,20 +155,6 @@ if (args.verbose) {
   console.log('authorize', me)
 } else {
   console.log(`authorize: %c${clientId} %c${me.application.name}`, 'color: green;', 'color: blue')
-}
-
-const printCommandsCount = (commands: RESTGetAPIApplicationCommandsResult) => {
-  console.log(
-    `%cCommands %c${commands.filter((v) => v.type === 1).length}/100%c | User %c${
-      commands.filter((v) => v.type === 2).length
-    }/5%c | Message %c${commands.filter((v) => v.type === 3).length}/5`,
-    'color: blue',
-    'color: green',
-    'color: blue',
-    'color: green',
-    'color: blue',
-    'color: green'
-  )
 }
 
 while (import.meta.main) {
@@ -259,3 +231,5 @@ while (import.meta.main) {
     }
   }
 }
+
+export default {}
