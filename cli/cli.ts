@@ -49,8 +49,8 @@ if (!import.meta.main) {
 }
 
 const args = parseArgs(Deno.args, {
-  string: ['i', 'guild', 'kv-path'],
-  boolean: ['h', 'help', 'verbose', 'spawn-subproc-with-deno-config'],
+  string: ['guild', 'kv-path'],
+  boolean: ['help', 'verbose', 'spawn-subproc-with-deno-config'],
   alias: {
     h: 'help',
     i: 'guild',
@@ -59,7 +59,7 @@ const args = parseArgs(Deno.args, {
   },
 })
 
-if (args.verbose) console.log({args})
+if (args.verbose) console.log({args, raw: Deno.args})
 if (args.verbose) console.log('config:', await cfgFilename())
 
 if (args.help || !args._.length) {
@@ -82,7 +82,6 @@ if (args.help || !args._.length) {
 
 // create subprocess with local deno.json[c] configs
 if (!args['spawn-subproc-with-deno-config']) {
-  // console.log(Deno.args)
   const command = new Deno.Command(Deno.execPath(), {
     args: [
       //
@@ -91,10 +90,10 @@ if (!args['spawn-subproc-with-deno-config']) {
       '-c',
       await cfgFilename(),
       'jsr:@maks11060/discord-interactions/cli',
+      // 'C:/Users/MAKS11060/code/discord-interaction/cli/cli.ts',
       // 'https://raw.githubusercontent.com/MAKS11060/discord-interactions/main/cli/cli.ts',
       '--spawn-subproc-with-deno-config',
-      '--',
-      // './src/commands.ts',
+      // '--',
       ...Deno.args, // pass args
     ],
     stdin: 'inherit',
@@ -167,7 +166,6 @@ while (import.meta.main) {
         {value: 'get', name: 'Get commands'},
         {value: 'list', name: 'Get commands JSON'},
         {value: 'deploy', name: 'Deploy commands'},
-        // ...(args?.guild ? [{value: 'deploy-guild', name: `Deploy commands guild(${args.guild})`}] : []),
         {value: 'delete', name: 'Delete commands'},
         {value: 'exit', name: 'Close CLI'},
       ],
@@ -180,7 +178,7 @@ while (import.meta.main) {
     const commands = await getApplicationsCommands(token, args?.guild)
     printCommandsCount(commands)
     for (const command of commands) {
-      console.log(command.id, command.name)
+      console.log(`%c${command.id} %c${command.name}`, 'color: green', 'color: blue')
     }
   }
 
