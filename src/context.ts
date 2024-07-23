@@ -31,9 +31,8 @@ import {
   type APIUser,
   type ComponentType,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
-  type RESTPostAPIInteractionCallbackJSONBody,
-  type RESTPostAPIWebhookWithTokenResult,
 } from 'discord-api-types/v10'
+import {DeferredContext} from './deferred-context.ts'
 import type {OptionToObject} from './types.ts'
 
 /** Type guard for `APIApplicationCommandOption` */
@@ -294,26 +293,23 @@ export class ApplicationCommandContext<
     }
   }
 
-  /* https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type */
-  /* TODO: add a callback to interact with the response */
+  /**
+   * Defers the interaction response and calls the provided callback function with a DeferredContext object.
+   * @param {(c: DeferredContext) => void | Promise<void>} callback - The callback function to call with the DeferredContext object.
+   * @param {Pick<APIInteractionResponseCallbackData, 'flags'>} [data] - The data for the deferred interaction response.
+   * @returns {APIInteractionResponseDeferredChannelMessageWithSource} The deferred interaction response object.
+   */
   deferredReply(
-    data: Pick<APIInteractionResponseCallbackData, 'flags'>
+    callback: (c: DeferredContext) => void | Promise<void>,
+    data?: Pick<APIInteractionResponseCallbackData, 'flags'>
   ): APIInteractionResponseDeferredChannelMessageWithSource {
-    return {
-      type: InteractionResponseType.DeferredChannelMessageWithSource,
-      data,
-    }
-  }
-
-  /* TODO: add a callback to interact with the response */
-  deferredReplyUpdate(): APIInteractionResponseDeferredMessageUpdate {
-    return {
-      type: InteractionResponseType.DeferredMessageUpdate,
-    }
+    callback(new DeferredContext(this.interaction))
+    return {type: InteractionResponseType.DeferredChannelMessageWithSource, data}
   }
 
   /**
    * Creates a modal window in response to the application command interaction.
+   *
    * WARNING calls all modal window handlers.
    * @param {APIModalInteractionResponseCallbackData} data - The data for the modal window.
    * @returns {APIModalInteractionResponse} The interaction response object.
@@ -471,6 +467,18 @@ export class MessageComponentContext {
   }
 
   /**
+   * Defers the interaction response update and calls the provided callback function with a DeferredContext object.
+   * @param {(c: DeferredContext) => void | Promise<void>} callback - The callback function to call with the DeferredContext object.
+   * @returns {APIInteractionResponseDeferredMessageUpdate} The deferred interaction response update object.
+   */
+  deferredReplyUpdate(
+    callback: (c: DeferredContext) => void | Promise<void>
+  ): APIInteractionResponseDeferredMessageUpdate {
+    callback(new DeferredContext(this.interaction))
+    return {type: InteractionResponseType.DeferredMessageUpdate}
+  }
+
+  /**
    * Creates a modal window in response to the message component interaction.
    * @param {APIModalInteractionResponseCallbackData} data - The data for the modal window.
    * @returns {APIModalInteractionResponse} The interaction response object.
@@ -483,10 +491,17 @@ export class MessageComponentContext {
   }
 }
 
-// TODO
+/**
+ * Represents the context of a modal submit interaction.
+ */
 export class ModalContext {
   constructor(readonly interaction: APIModalSubmitInteraction, readonly data: APIModalSubmission) {}
 
+  /**
+   * Sends a new message in response to the modal submit interaction.
+   * @param {APIInteractionResponseCallbackData} data - The data for the new message.
+   * @returns {APIInteractionResponseChannelMessageWithSource} The interaction response object.
+   */
   reply(data: APIInteractionResponseCallbackData): APIInteractionResponseChannelMessageWithSource {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -494,14 +509,18 @@ export class ModalContext {
     }
   }
 
-  /* TODO: add a callback to interact with the response */
+  /**
+   * Defers the interaction response and calls the provided callback function with a DeferredContext object.
+   * @param {(c: DeferredContext) => void | Promise<void>} callback - The callback function to call with the DeferredContext object.
+   * @param {Pick<APIInteractionResponseCallbackData, 'flags'>} [data] - The data for the deferred interaction response.
+   * @returns {APIInteractionResponseDeferredChannelMessageWithSource} The deferred interaction response object.
+   */
   deferredReply(
-    data: Pick<APIInteractionResponseCallbackData, 'flags'>
+    callback: (c: DeferredContext) => void | Promise<void>,
+    data?: Pick<APIInteractionResponseCallbackData, 'flags'>
   ): APIInteractionResponseDeferredChannelMessageWithSource {
-    return {
-      type: InteractionResponseType.DeferredChannelMessageWithSource,
-      data,
-    }
+    callback(new DeferredContext(this.interaction))
+    return {type: InteractionResponseType.DeferredChannelMessageWithSource, data}
   }
 }
 
@@ -565,36 +584,4 @@ export class MessageMenuCommandContext extends MenuCommandContext {
     if (data.type !== ApplicationCommandType.Message) return null!
     return data.resolved.messages[data.target_id]
   }
-}
-
-// TODO
-const createDeferredResponse = () => {
-  /*
-    TODO: https://discord.com/developers/docs/interactions/receiving-and-responding#create-interaction-response
-    `https://discord.com/api/v10/interactions/{interaction.id}/{interaction.token}/callback`
-    `https://discord.com/api/v10/interactions/{interaction.id}/{interaction.token}/messages/@original`
-    `https://discord.com/api/v10/webhooks/{application.id}/{interaction.token}`
-  */
-
-  const send = async () => {
-    const body = {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {},
-    } satisfies RESTPostAPIInteractionCallbackJSONBody
-
-    const res = await fetch(
-      `https://discord.com/api/v10/interactions/{interaction.id}/{interaction.token}/callback`,
-      {
-        method: 'POST',
-        body: JSON.stringify(body),
-      }
-    )
-
-    return res.ok ? ((await res.json()) as RESTPostAPIWebhookWithTokenResult) : await res.json()
-  }
-
-  const edit = () => {}
-  const cancel = () => {}
-
-  return {send, edit, cancel}
 }
