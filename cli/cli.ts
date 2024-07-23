@@ -84,13 +84,11 @@ if (args.help || !args._.length) {
 if (!args['spawn-subproc-with-deno-config']) {
   const command = new Deno.Command(Deno.execPath(), {
     args: [
-      //
       'run',
       '-A',
       '-c',
       await cfgFilename(),
       'jsr:@maks11060/discord-interactions/cli',
-      // 'C:/Users/MAKS11060/code/discord-interaction/cli/cli.ts',
       // 'https://raw.githubusercontent.com/MAKS11060/discord-interactions/main/cli/cli.ts',
       '--spawn-subproc-with-deno-config',
       // '--',
@@ -146,6 +144,7 @@ const authorize = async () => {
 const token = await authorize()
 if (!token) {
   await kv.delete(['token', clientId])
+  kv.close()
   throw new Error('Not authorized. restart CLI')
 }
 
@@ -172,13 +171,23 @@ while (import.meta.main) {
     },
   ])
 
-  if (select.action === 'exit') break
+  if (select.action === 'exit') {
+    kv.close()
+    break
+  }
 
   if (select.action === 'get') {
     const commands = await getApplicationsCommands(token, args?.guild)
     printCommandsCount(commands)
     for (const command of commands) {
-      console.log(`%c${command.id} %c${command.name}`, 'color: green', 'color: blue')
+      console.log(
+        `%c${command.id} %c${command.name} %c${
+          command.type === 2 ? 'User' : command.type === 3 ? 'Message' : ''
+        }`,
+        'color: green',
+        'color: blue',
+        'color: blue; text-decoration: underline'
+      )
     }
   }
 
@@ -209,7 +218,7 @@ while (import.meta.main) {
       if ((deploy as unknown as RESTError).errors)
         console.error(`Deploy: ${item.name}`, JSON.stringify(deploy, null, 2))
 
-      console.log(`Deploy: %c${deploy.id} ${item.name}`, 'color: green')
+      console.log(`Deploy: %c${deploy.id} %c${item.name}`, 'color: green', 'color: blue')
     }
   }
 
