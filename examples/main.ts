@@ -4,7 +4,7 @@ import 'jsr:@std/dotenv@0/load'
 import {
   InteractionType,
   type APIInteraction,
-  type APIInteractionResponse
+  type APIInteractionResponse,
 } from 'discord-api-types/v10'
 import {Hono} from 'hono'
 import {loggerBody} from 'https://raw.githubusercontent.com/MAKS11060/deno-libs/main/hono/loggerBody.ts'
@@ -21,11 +21,11 @@ const app = new Hono().post(
       console.log(InteractionType[type], data)
     },
     // incoming: (int) => {
-      // console.log(int)
+    //   console.log(int)
     // },
     outgoing: (data) => {
-      console.log('%coutgoing ///////////////////////////////////////////', 'color: red')
-      console.log(data)
+      // console.log('%coutgoing ///////////////////////////////////////////', 'color: red')
+      // console.log(data)
     },
   }),
   ...(await discordInteraction(key, commands, {manualMessageComponentHandler: true}))

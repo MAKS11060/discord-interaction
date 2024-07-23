@@ -4,12 +4,15 @@ import {
   ButtonStyle,
   ComponentType,
   TextInputStyle,
-  type APIActionRowComponent,
-  type APIMessageActionRowComponent,
 } from 'discord-api-types/v10'
 import {ulid} from 'jsr:@std/ulid'
 import {Format, defineCommand} from '../mod.ts'
 import {DateTimeFormat} from '../src/lib/message-format.ts'
+import {deferredReply} from './0_deferredReply.ts'
+import {hello} from './1_hello.ts'
+import {counter} from './2_counter.ts'
+import {autocomplete, autocomplete2} from './3_autocomplete.ts'
+import {modal} from './4_modal.ts'
 
 const test1 = defineCommand({
   name: 'test1',
@@ -280,7 +283,7 @@ const test7 = defineCommand({
   }),
 })
 
-const all = defineCommand({
+const allOptions = defineCommand({
   name: 'all',
   description: 'All',
   options: [
@@ -324,7 +327,7 @@ const all = defineCommand({
   }),
 })
 
-const all2 = defineCommand({
+const allOptions2 = defineCommand({
   name: 'all2',
   description: 'All2',
   options: [
@@ -366,261 +369,14 @@ const all2 = defineCommand({
   },
 })
 
-const hello = defineCommand({
-  name: 'hello',
-  description: 'says hi',
-}).createHandler({
-  hello: () => ({
-    command: (c) => {
-      return c.reply({
-        content: `Hello ${Format.user(c.user.id)}`,
-      })
-    },
-  }),
-})
-
-const autocompleteTest = defineCommand({
-  name: 'autocomplete',
-  description: 'Autocomplete Test',
-  options: [
-    {
-      type: ApplicationCommandOptionType.String,
-      name: 'str',
-      description: 'str',
-      autocomplete: true,
-    },
-    {
-      type: ApplicationCommandOptionType.String,
-      name: 't',
-      description: 'str',
-      choices: [
-        {name: 'ch1', value: '1'},
-        {name: 'ch2', value: '2'},
-      ],
-    },
-    {
-      type: ApplicationCommandOptionType.Integer,
-      name: 'int',
-      description: 'int',
-      autocomplete: true,
-    },
-    {
-      type: ApplicationCommandOptionType.Number,
-      name: 'num',
-      description: 'num',
-      autocomplete: true,
-    },
-  ],
-}).createHandler({
-  autocomplete: () => ({
-    command(c) {
-      return c.reply({content: ''})
-    },
-    autocomplete(c) {
-      const str = c.getString('str')!
-      if (str.focused) {
-        const uuid = crypto.randomUUID()
-        return c.autocomplete({
-          choices: [
-            {name: 'hello', value: 'hello'},
-            {name: 'autocomplete', value: 'autocomplete'},
-            {name: uuid, value: uuid},
-          ],
-        })
-      }
-
-      const num = c.getInteger('int')!
-      if (num.focused) {
-        return c.autocomplete({
-          choices: [
-            {name: '0', value: 0},
-            {name: '2', value: 2},
-            {name: '4', value: 4},
-          ],
-        })
-      }
-
-      return c.pass()
-    },
-  }),
-})
-
-const autocompleteTest2 = defineCommand({
-  name: 'autocomplete2',
-  description: 'Autocomplete Test',
-  options: [
-    {
-      type: ApplicationCommandOptionType.SubcommandGroup,
-      name: 'sub-g',
-      description: 'group',
-      options: [
-        {
-          type: ApplicationCommandOptionType.Subcommand,
-          name: 'sub',
-          description: 'sub',
-          options: [
-            {
-              type: ApplicationCommandOptionType.String,
-              name: 'str',
-              description: 'str',
-              autocomplete: true,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      type: ApplicationCommandOptionType.Subcommand,
-      name: 'sub',
-      description: 'sub',
-      options: [
-        {
-          type: ApplicationCommandOptionType.String,
-          name: 'str',
-          description: 'str',
-          autocomplete: true,
-        },
-      ],
-    },
-  ],
-}).createHandler({
-  autocomplete2: {
-    'sub-g': {
-      sub: () => ({
-        command(c) {
-          return c.reply({content: ''})
-        },
-        autocomplete(c) {
-          if (c.getString('str')?.focused) {
-            const uuid = crypto.randomUUID()
-            return c.autocomplete({
-              choices: [
-                {name: 'hello', value: 'hello'},
-                {name: 'autocomplete', value: 'autocomplete'},
-                {name: uuid, value: uuid},
-              ],
-            })
-          }
-
-          return c.pass()
-        },
-      }),
-    },
-    sub: () => ({
-      command(c) {
-        return c.reply({content: ''})
-      },
-      autocomplete(c) {
-        if (c.getString('str')?.focused) {
-          const uuid = crypto.randomUUID()
-          return c.autocomplete({
-            choices: [
-              {name: 'hello2', value: 'hello'},
-              {name: 'autocomplete2', value: 'autocomplete'},
-              {name: uuid, value: uuid},
-            ],
-          })
-        }
-
-        return c.pass()
-      },
-    }),
-  },
-})
-
-const messageComponentTest = defineCommand({
-  name: 'message-component',
-  description: 'message component test',
-  options: [
-    {
-      type: ApplicationCommandOptionType.String,
-      name: 'str',
-      description: 'Str',
-    },
-  ],
-}).createHandler({
-  'message-component': () => {
-    const initialState: APIActionRowComponent<APIMessageActionRowComponent>[] = [
-      {
-        type: ComponentType.ActionRow,
-        components: [
-          {
-            type: ComponentType.Button,
-            style: ButtonStyle.Danger,
-            label: 'reset',
-            custom_id: JSON.stringify(['reset']),
-          },
-          {
-            type: ComponentType.Button,
-            style: ButtonStyle.Success,
-            label: 'clicks: 0',
-            custom_id: JSON.stringify(['click', 0]),
-          },
-          {
-            type: ComponentType.Button,
-            style: ButtonStyle.Secondary,
-            label: 'clone',
-            custom_id: JSON.stringify(['clone', 0]),
-          },
-        ],
-      },
-    ]
-
-    return {
-      command(c) {
-        return c.reply({components: initialState})
-      },
-
-      async messageComponent(c) {
-        const [id, counter] = JSON.parse(c.customId)
-
-        if (id === 'reset') {
-          return c.replyUpdate({components: initialState})
-        }
-
-        if (id === 'clone') {
-          // copy current component and create new message
-          return c.reply({
-            components: c.interaction.message.components,
-          })
-        }
-
-        if (id === 'click') {
-          const clicks = Number(counter) + 1
-          return c.replyUpdate({
-            components: [
-              {
-                type: ComponentType.ActionRow,
-                components: [
-                  {
-                    type: ComponentType.Button,
-                    style: ButtonStyle.Danger,
-                    label: 'reset',
-                    custom_id: JSON.stringify(['reset']),
-                  },
-                  {
-                    type: ComponentType.Button,
-                    style: ButtonStyle.Success,
-                    label: `clicks: ${clicks}`,
-                    custom_id: JSON.stringify(['click', clicks]),
-                  },
-                  {
-                    type: ComponentType.Button,
-                    style: ButtonStyle.Secondary,
-                    label: 'clone',
-                    custom_id: JSON.stringify(['clone']),
-                  },
-                ],
-              },
-            ],
-          })
-        }
-      },
-    }
-  },
-})
-
 export const commands = [
+  //
+  deferredReply,
+  hello,
+  counter,
+  autocomplete,
+  autocomplete2,
+  modal,
   //
   test1,
   test2,
@@ -629,10 +385,6 @@ export const commands = [
   test5,
   test6,
   test7,
-  all,
-  all2,
-  hello,
-  autocompleteTest,
-  autocompleteTest2,
-  messageComponentTest,
+  allOptions,
+  allOptions2,
 ]
