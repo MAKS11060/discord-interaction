@@ -33,16 +33,6 @@ export type Unpack<T extends unknown[] | undefined> = T extends Array<infer O> ?
 
 export type EmptyArray<T> = T extends [] ? never : T
 
-// type Autocomplete<T extends APIApplicationCommandOption> = T extends {
-//   autocomplete: true
-// }
-//   ? {
-//       autocomplete(
-//         c: ApplicationCommandAutocompleteContext<T>
-//       ): APIInteractionResponse | Promise<APIInteractionResponse>
-//     }
-//   : never
-
 export type isRequiredOption<T extends APIApplicationCommandBasicOption> = T extends {
   required: true
 }
@@ -130,7 +120,6 @@ export type CommandHandler<
     c: ApplicationCommandAutocompleteContext<O>
   ): APIInteractionResponse | Promise<APIInteractionResponse>
 }
-// | Autocomplete<O>
 
 type UserMenuCommandContextHandler /* <
   T extends RESTPostAPIContextMenuApplicationCommandsJSONBody = any
@@ -169,14 +158,6 @@ export type CommandSchema<T extends RESTPostAPIChatInputApplicationCommandsJSONB
       : {[K in T['name']]: CommandHandler<T, never>}
     : {[K in T['name']]: CommandHandler<T, never>}
 
-/*
-export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> = {
-  [K in T['name']]: T['type'] extends ApplicationCommandType.User
-    ? UserMenuCommandContextHandler
-    : T['type'] extends ApplicationCommandType.Message
-    ? MessageMenuCommandContextHandler
-    : never //ContextMenuHandler
-} */
 export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplicationCommandsJSONBody> =
   T['type'] extends ApplicationCommandType.User
     ? {
@@ -188,7 +169,7 @@ export type ContextMenuCommandSchema<T extends RESTPostAPIContextMenuApplication
       }
     : never
 
-export type Handler = CommandHandler<any, any> | ContextMenuHandler /* <any> */
+export type Handler = CommandHandler<any, any> | ContextMenuHandler
 
 type HandlerRecord = Record<string, Handler | Record<string, Handler | Record<string, Handler>>>
 
