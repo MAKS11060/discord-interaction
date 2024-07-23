@@ -110,18 +110,19 @@ Deno.serve(req => {
   - [x] ApplicationCommandContext
     - [x] getter for options
     - [x] reply/replyUpdate
-    - [ ] deferredReply/deferredReplyUpdate
+    - [x] deferredReply
   - [x] ApplicationCommandAutocompleteContext
     - [x] get[string/integer/number]
     - [x] autocomplete()
     - [x] pass() return empty autocomplete
   - [x] MessageComponentContext
     - [x] getter(type/customId)
+    - [x] deferredReplyUpdate (DeferredMessageUpdate)
     - [x] optional response support
     - [x] optional. Support for manual call handling
-  - [ ] ModalContext
+  - [x] ModalContext
     - [x] reply
-    - [ ] deferredReply
+    - [x] deferredReply
   - [x] MenuCommandContext
     - [x] reply
     - [x] UserMenuCommandContext
