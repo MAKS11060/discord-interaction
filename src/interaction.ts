@@ -469,20 +469,3 @@ export const defineCommand = <const T extends RESTPostAPIApplicationCommandsJSON
     },
   }
 }
-
-// export const defineCommands = <const T extends RESTPostAPIApplicationCommandsJSONBody[]>(
-//   commands: T
-// ): {
-//   commands: T
-//   createHandler(handler: DefineHandlerArray<T>): {
-//     commands: T
-//     handler: DefineHandlerArray<T>
-//   }
-// } => {
-//   return {
-//     commands,
-//     createHandler(handler: DefineHandlerArray<T>) {
-//       return {commands, handler}
-//     },
-//   }
-// }

@@ -184,26 +184,3 @@ export type DefineHandler<T extends RESTPostAPIApplicationCommandsJSONBody> =
     : T extends RESTPostAPIContextMenuApplicationCommandsJSONBody
     ? ContextMenuCommandSchema<T>
     : never
-
-// =========================== // defineCommands // UNSTABLE TYPES
-// export type DefineHandlerArray<T extends RESTPostAPIApplicationCommandsJSONBody[]> =
-//   UnionToIntersection<DefineHandler<Unpack<T>>>
-
-// type B = DefineHandlerArray<
-//   [
-//     {
-//       name: 'a'
-//       description: 'a'
-//       options: [
-//         {type: ApplicationCommandOptionType.String; name: 's'; description: 'd'}
-//       ]
-//     },
-//     {
-//       name: 'b'
-//       description: 'a'
-//       options: [
-//         {type: ApplicationCommandOptionType.String; name: 's'; description: 'd'}
-//       ]
-//     }
-//   ]
-// >
