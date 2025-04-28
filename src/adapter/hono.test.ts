@@ -25,6 +25,7 @@ Deno.test('ping', async (c) => {
     id: '',
     token: '',
     version: 1,
+    attachment_size_limit: 0
   } satisfies APIInteraction
 
   const req = new Request('http://localhost/interaction', {

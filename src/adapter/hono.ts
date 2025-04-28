@@ -1,5 +1,4 @@
 /**
- * @module
  * Adapter for {@link https://hono.dev Hono} framework
  *
  * @example Usage `Hono` framework
@@ -16,6 +15,8 @@
  *
  * Deno.serve(app.fetch)
  * ```
+ *
+ * @module
  */
 
 import {concat} from '@std/bytes/concat'

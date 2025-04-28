@@ -1,4 +1,4 @@
-import {Spinner} from 'jsr:@std/cli@1/spinner'
+import {Spinner} from 'jsr:@std/cli@1/unstable-spinner'
 import 'jsr:@std/dotenv@0/load'
 import {
   Locale,

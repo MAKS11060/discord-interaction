@@ -1,5 +1,5 @@
-#!/usr/bin/env -S deno run -A --watch
-import 'jsr:@std/dotenv@0/load'
+#!/usr/bin/env -S deno run -A --env-file --watch-hmr
+
 
 import {
   InteractionType,

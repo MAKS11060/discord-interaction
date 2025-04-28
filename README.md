@@ -30,7 +30,7 @@ CLIENT_PUBLIC_KEY=  # Required for verifying requests
 
 ## Install from [JSR](https://jsr.io/@maks11060/discord-interactions)
 ```powershell
-deno add @maks11060/discord-interactions
+deno add jsr:@maks11060/discord-interactions
 deno add npm:discord-api-types
 ```
 
