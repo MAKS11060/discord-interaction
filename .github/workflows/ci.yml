@@ -7,21 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
-
-      - name: Set up Deno
-        uses: denoland/setup-deno@v2
-
-      - name: Run tests
-        run: deno task test
-
-  publish-dry-run:
+  CI:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -35,5 +21,39 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v2
 
+      - name: Test
+        run: deno task test
+
       - name: Publish (dry run)
         run: deno task check
+
+  # test:
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 30
+
+  #   steps:
+  #     - name: Clone repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Deno
+  #       uses: denoland/setup-deno@v2
+
+  #     - name: Run tests
+  #       run: deno task test
+
+  # publish-dry-run:
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 30
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+
+  #   steps:
+  #     - name: Clone repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Deno
+  #       uses: denoland/setup-deno@v2
+
+  #     - name: Publish (dry run)
+  #       run: deno task check

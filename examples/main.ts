@@ -1,6 +1,5 @@
 #!/usr/bin/env -S deno run -A --env-file --watch-hmr
 
-
 import {
   InteractionType,
   type APIInteraction,
