@@ -1,7 +1,7 @@
 /**
- * @module
- *
  * Discord interactions library
+ *
+ * @module
  */
 
 export {defineCommand, discordInteraction} from './src/interaction.ts'

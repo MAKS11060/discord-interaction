@@ -1,8 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
 /**
- * @module
- *
  * Deno-based interactive CLI for deploying commands to Discord.
  *
  * @example Install cli
@@ -19,6 +17,8 @@
  * ```bash
  * deploy-discord -h
  * ```
+ *
+ * @module
  */
 
 import {Checkbox} from 'jsr:@cliffy/prompt@1.0.0-rc.5/checkbox'
