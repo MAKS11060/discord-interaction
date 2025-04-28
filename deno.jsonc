@@ -3,19 +3,23 @@
   "version": "0.0.0",
   "lock": false,
   "tasks": {
-    "dev": "deno run -A --unstable-hmr examples/main.ts",
-    "devr": "deno run -Ar --unstable-hmr examples/main.ts",
-    "ci": "deno task publish-dry-run --allow-dirty && deno task test",
+    "dev": "deno run -A --watch-hmr examples/main.ts",
     "test": "deno test -A",
-    "publish-dry-run": "deno publish --dry-run"
+    "check": "deno publish --dry-run --allow-dirty",
+    "ci": {
+      "dependencies": [
+        "test",
+        "check"
+      ]
+    },
   },
   "imports": {
-    "@std/bytes": "jsr:@std/bytes@1",
-    "@std/collections": "jsr:@std/collections@1",
-    "@std/encoding": "jsr:@std/encoding@1",
-    "discord-api-types": "npm:discord-api-types@0",
-    "hono": "jsr:@hono/hono@4",
-    "zod": "npm:zod@3"
+    "@std/bytes": "jsr:@std/bytes@^1.0.5",
+    "@std/collections": "jsr:@std/collections@^1.0.10",
+    "@std/encoding": "jsr:@std/encoding@^1.0.7",
+    "discord-api-types": "npm:discord-api-types@^0.38.1",
+    "hono": "npm:hono@^4.7.8",
+    "zod": "npm:zod@^3.24.3"
   },
   "exports": {
     ".": "./mod.ts",
